@@ -1,0 +1,34 @@
+# Build artifacts and executables
+md
+*.o
+*.a
+*.so
+*.dll
+*.dylib
+
+# Build directories
+build/
+dist/
+bin/
+obj/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Generated output and temporary files
+*.out
+*.log
+outputdata.txt
+output/
+results/
+tmp/
+
+# Deuacalion Documentation
+cpar_docs
