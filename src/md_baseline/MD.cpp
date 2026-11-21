@@ -211,7 +211,11 @@ int main()
     
     scanf("%lf",&rho);
     
+#ifdef NUMBER_OF_PARTICLES
+    N = NUMBER_OF_PARTICLES;
+#else
     N = 5000;
+#endif
     Vol = N/(rho*NA);
     
     Vol /= VolFac;
