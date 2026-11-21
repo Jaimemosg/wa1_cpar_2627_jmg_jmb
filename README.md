@@ -40,6 +40,7 @@ All parameters have defaults and can be overridden on the command line as `NAME=
 | `FOLDER_NAME` | `md_baseline` | Subfolder inside `src/` containing the `.c` (or `.cpp`) source file. Also selects `results/<FOLDER_NAME>/`. |
 | `PARTICLES` | `200` | Number of particles compiled into the binary via `-D NUMBER_OF_PARTICLES=$(PARTICLES)`. |
 | `REPEATS` | `5` | Number of repeated runs used to compute mean and standard deviation/spread. |
+| `OPENMP` | `0` | Set to `1` to enable OpenMP compilation and linking (`-fopenmp`). |
 
 > **Note:** GNU Make passes custom arguments as `VARIABLE=value` pairs (not `--flags`).
 
@@ -57,6 +58,10 @@ make hotspots
 
 # Customize folder, particle count, and repetitions
 make hotspots FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=5
+
+# Enable OpenMP (-fopenmp) and optionally set the thread count
+make hotspots FOLDER_NAME=md_a OPENMP=1
+OMP_NUM_THREADS=4 make hotspots FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
 ```
 
 ### What it does
@@ -97,6 +102,9 @@ make metrics
 
 # Customize folder, particle count, and repetitions
 make metrics FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=10
+
+# Enable OpenMP (-fopenmp) with a specific thread count
+OMP_NUM_THREADS=4 make metrics FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
 ```
 
 ### What it does
@@ -150,6 +158,10 @@ srun --partition=<partition> make metrics  FOLDER_NAME=md_baseline PARTICLES=200
 ```bash
 make hotspots FOLDER_NAME=md_v1 PARTICLES=200 REPEATS=5
 make metrics  FOLDER_NAME=md_v1 PARTICLES=200 REPEATS=5
+
+# For OpenMP versions, add OPENMP=1 (and optionally OMP_NUM_THREADS)
+OMP_NUM_THREADS=4 make hotspots FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
+OMP_NUM_THREADS=4 make metrics  FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
 ```
 
 The binary will be compiled to `src/md_v1/md_profiling` and all reports and simulation outputs will be saved under `results/md_v1/`.

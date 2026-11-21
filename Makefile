@@ -127,8 +127,9 @@
 #     make clean                remove binary and generated files
 #     Add FOLDER_NAME=<dir> to select a subfolder under src/ (default md_baseline),
 #     PARTICLES=<n> to change the number of particles (default 200),
-#     and REPEATS=<r> to change the number of repeated runs (default 5),
-#     e.g. "make hotspots FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=5".
+#     REPEATS=<r> to change the number of repeated runs (default 5),
+#     and OPENMP=1 to enable OpenMP compilation with -fopenmp (default 0),
+#     e.g. "make hotspots FOLDER_NAME=md_a PARTICLES=800 REPEATS=5 OPENMP=1".
 #
 #  On the cluster, prefix with srun, e.g.:
 #     srun --partition=<arm partition> make hotspots FOLDER_NAME=md_baseline PARTICLES=200
@@ -165,13 +166,15 @@
 # 1. CONFIGURATION & SETTINGS
 # ==============================================================================
 
-# Default command-line parameters (override with `make <target> FOLDER_NAME=... PARTICLES=... REPEATS=...`)
+# Default command-line parameters (override with `make <target> FOLDER_NAME=... PARTICLES=... REPEATS=... OPENMP=...`)
 # FOLDER_NAME       Subfolder inside src/ containing the source file (also used for results/$(FOLDER_NAME)).
 # PARTICLES         Particle count compiled into the binary (defaults to 200 for fast initial profiling).
 # REPEATS           Number of repeated runs for hotspots, metrics, and roofline (mean +- std dev).
+# OPENMP            Set to 1 to compile and link with -fopenmp (defaults to 0 for sequential builds).
 FOLDER_NAME ?= md_baseline
 PARTICLES   ?= 200
 REPEATS     ?= 5
+OPENMP      ?= 0
 
 # Compiler and file paths
 # COMPILER          gcc, the same compiler as the submission Makefile (compiles both .c and .cpp files).
@@ -203,6 +206,10 @@ COMPILER_FLAGS = \
 	-g \
 	-fno-omit-frame-pointer \
 	-Wno-unused-result
+
+ifeq ($(OPENMP),1)
+COMPILER_FLAGS += -fopenmp
+endif
 
 # Declare all targets as PHONY (they are action names, not actual files on disk, so Make always runs them).
 # Note: .DEFAULT_GOAL is not needed because `hotspots` is placed first in Section 2.
@@ -239,7 +246,7 @@ hotspots: build
 	@rm --force $(RESULTS_FOLDER)/hotspots_self_N$(PARTICLES)_run*.txt
 	@set -e; \
 	for i in $$(seq 1 $(REPEATS)); do \
-		echo "=== Hotspots run $$i/$(REPEATS) (FOLDER_NAME=$(FOLDER_NAME), PARTICLES=$(PARTICLES)) ==="; \
+		echo "=== Hotspots run $$i/$(REPEATS) (FOLDER_NAME=$(FOLDER_NAME), PARTICLES=$(PARTICLES), OPENMP=$(OPENMP)) ==="; \
 		perf record \
 			--freq 10000 \
 			--all-user \
