@@ -37,3 +37,5 @@ src/*/md_profiling
 # Course Documentation
 cpar_docs
 plans
+# Aggregated benchmark output
+/results/metrics_summary.csv

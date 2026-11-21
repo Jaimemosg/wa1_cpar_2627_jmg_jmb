@@ -165,3 +165,61 @@ OMP_NUM_THREADS=4 make metrics  FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
 ```
 
 The binary will be compiled to `src/md_v1/md_profiling` and all reports and simulation outputs will be saved under `results/md_v1/`.
+
+
+## Algorithm A: particle and thread-count experiment
+
+Run from the project folder:
+
+```bash
+sh benchmark_particles.sh
+```
+
+This benchmarks `md_a` with 200, 400, 800, 1600, and 3200 particles
+at each of 1, 2, and 4 OpenMP threads, with five repetitions per combination.
+Dynamic thread adjustment is disabled. The existing `inputdata.txt` supplies
+the same simulation parameters for every run. Compilation is outside the
+timing; elapsed time includes simulation file output.
+
+Reports appear in the terminal and in
+`results/md_a_t<threads>/metric_N<particles>.txt`, keeping thread counts
+separate. Use `seconds time elapsed` to compare mean runtime. At a fixed
+particle count, speedup is the one-thread time divided by the multi-thread time.
+Rerunning replaces reports for the same configuration. Simulation output files
+are overwritten within each thread folder, leaving that thread count's final run.
+Existing reports in `results/md_a/` are preserved.
+
+For a smaller test or custom experiment:
+
+```bash
+PARTICLE_COUNTS="200 400" THREAD_COUNTS="1 2" REPEATS=2 sh benchmark_particles.sh
+```
+
+Generated reports remain excluded from Git by the existing `.gitignore` rules.
+
+
+### Aggregate particle/thread timing results
+
+After running the experiment, collect its reports with:
+
+```bash
+python3 scripts/aggregate_metrics.py --output results/metrics_summary.csv
+```
+
+The CSV contains particles, threads, repetition count (when reported), mean
+elapsed seconds, the elapsed error printed by perf, speedup relative to one
+thread at the same particle count, parallel efficiency (speedup / threads),
+time / particles squared, and source report path. Efficiency is a fraction:
+1.0 means 100%. The reported error is preserved as printed by perf; it is not
+recomputed or relabeled as a standard deviation.
+
+This collects existing summaries rather than averaging them again. Missing
+one-thread baselines leave speedup and efficiency blank. Invalid timing reports
+stop aggregation with an error. Only `results/md_a_t*/metric_N*.txt` is read;
+older reports in `results/md_a/` are excluded. Use comparable runs with the same
+input, compiler settings, and machine conditions. The benchmark script sets `LC_ALL=C` internally to produce consistent
+dot-decimal perf output for aggregation.
+
+Omit `--output` to print CSV to the terminal, or use `--results-dir PATH` to read
+another experiment directory. The output file is replaced on each invocation.
+The generated `results/metrics_summary.csv` is ignored by Git.
