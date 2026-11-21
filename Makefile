@@ -157,7 +157,7 @@
 #    └── Runs `perf stat --repeat $(REPEATS)` on Fujitsu A64FX FP64 & cache-refill counters.
 
 # 6. HOUSEKEEPING (clean)
-#    └── Removes binary, perf.data, and simulation outputs (keeps results/).
+#    └── Removes binary, root-level temp outputs, and generated files in results/$(FOLDER_NAME)/ (keeps .gitkeep).
 
 
 
@@ -376,9 +376,9 @@ roofline: build
 # ==============================================================================
 # 6. HOUSEKEEPING (`clean`)
 # ==============================================================================
-# Removes the compiled profiling binary, raw perf recordings (root and results folder),
-# and root-level simulation output files.
-# Note: saved text reports in $(RESULTS_FOLDER) are preserved.
+# Removes the compiled profiling binary, root-level perf recordings and simulation outputs,
+# and all generated files in $(RESULTS_FOLDER) (reports, simulation outputs, perf recordings),
+# while keeping the $(RESULTS_FOLDER) directory and hidden files like .gitkeep.
 #
 # rm                     Standard Unix utility to delete files.
 # --force                Deletes files without prompting and ignores missing files (short form: -f).
@@ -388,7 +388,9 @@ clean:
 		$(PROFILING_BINARY) \
 		perf.data \
 		perf.data.old \
-		$(RESULTS_FOLDER)/perf.data \
-		$(RESULTS_FOLDER)/perf.data.old \
-		$(SIM_OUTPUTS)
+		$(SIM_OUTPUTS) \
+		$(RESULTS_FOLDER)/*.txt \
+		$(RESULTS_FOLDER)/*.xyz \
+		$(RESULTS_FOLDER)/*.data \
+		$(RESULTS_FOLDER)/*.data.old
 
