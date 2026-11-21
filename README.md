@@ -1,0 +1,155 @@
+# Profiling Guide (`Makefile`)
+
+This project uses a [Makefile](Makefile) to compile and profile different versions of the molecular dynamics (MD) code with `perf`, storing binaries per implementation folder and organizing reports under `results/`.
+
+## Requirements
+
+- `gcc`
+- `make`
+- `perf` (`linux-tools` / cluster `perf`)
+- `python3` (standard library only, used by [scripts/aggregate_hotspots.py](scripts/aggregate_hotspots.py))
+
+## Project Structure
+
+```text
+.
+├── Makefile
+├── inputdata.txt                 # Simulation parameters fed into stdin
+├── scripts/
+│   └── aggregate_hotspots.py     # Computes mean +- std dev across hotspot runs
+├── src/
+│   └── <FOLDER_NAME>/
+│       ├── MD.cpp (or *.c)       # Source file (first .c or .cpp in the folder)
+│       └── md_profiling          # Compiled profiling binary
+└── results/
+    └── <FOLDER_NAME>/
+        ├── hotspots_self_N<P>_run1.txt .. _run<R>.txt
+        ├── hotspots_self_N<P>.txt
+        ├── metric_N<P>.txt
+        ├── cp_average.txt
+        ├── cp_output.txt
+        └── cp_traj.xyz
+```
+
+## Makefile Parameters
+
+All parameters have defaults and can be overridden on the command line as `NAME=value`:
+
+| Parameter | Default | Description |
+| :--- | :--- | :--- |
+| `FOLDER_NAME` | `md_baseline` | Subfolder inside `src/` containing the `.c` (or `.cpp`) source file. Also selects `results/<FOLDER_NAME>/`. |
+| `PARTICLES` | `200` | Number of particles compiled into the binary via `-D NUMBER_OF_PARTICLES=$(PARTICLES)`. |
+| `REPEATS` | `5` | Number of repeated runs used to compute mean and standard deviation/spread. |
+
+> **Note:** GNU Make passes custom arguments as `VARIABLE=value` pairs (not `--flags`).
+
+---
+
+## 1. Hotspot Profiling (`make hotspots`)
+
+Identifies which functions take the most self CPU time by sampling with `perf record` and summarizing with `perf report`. `hotspots` is the default target, so `make` and `make hotspots` are equivalent.
+
+### Usage
+
+```bash
+# Run with defaults (FOLDER_NAME=md_baseline, PARTICLES=200, REPEATS=5)
+make hotspots
+
+# Customize folder, particle count, and repetitions
+make hotspots FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=5
+```
+
+### What it does
+
+1. **Builds** the `.c` (or `.cpp`) file inside `src/$(FOLDER_NAME)/` into `src/$(FOLDER_NAME)/md_profiling` with `-O3 -ffast-math -g -fno-omit-frame-pointer` and creates `results/$(FOLDER_NAME)/`.
+2. **Records `REPEATS` independent runs** at 10,000 Hz (`--all-user --call-graph fp`), saving each run's flat self-time table to:
+   - `results/$(FOLDER_NAME)/hotspots_self_N$(PARTICLES)_run1.txt` ... `_run$(REPEATS).txt`
+   *(Any stale `_run*.txt` files for that particle count are cleared before starting.)*
+3. **Moves simulation outputs** (`cp_average.txt`, `cp_output.txt`, `cp_traj.xyz`) into `results/$(FOLDER_NAME)/`.
+4. **Aggregates all runs** with [scripts/aggregate_hotspots.py](scripts/aggregate_hotspots.py), saving the complete table to `results/$(FOLDER_NAME)/hotspots_self_N$(PARTICLES).txt` and printing the top 6 functions per event to the terminal.
+
+### Reading the aggregated output
+
+```text
+#   Mean %    Std Dev  Avg Samples    Runs  Symbol
+# ........  .........  ...........  ......  ................................
+    57.45%  +-  0.68%        525.6     5/5  [.] Potential()
+    41.30%  +-  1.04%        381.2     5/5  [.] computeAccelerations()
+```
+
+- **Mean %**: Average self-time overhead across runs where the PMU event was recorded (missing symbols in a run count as `0%`).
+- **Std Dev**: Sample standard deviation in percentage points (`0.00%` when `REPEATS=1`).
+- **Avg Samples**: Mean number of raw samples recorded in that function per run.
+- **Runs**: Number of runs in which the function received at least one sample.
+- **Symbol**: Function name (`[.]` = user-space code).
+
+---
+
+## 2. Overall Benchmarking (`make metrics`)
+
+Measures wall-clock time, `task-clock`, CPU `cycles`, and retired `instructions` averaged over `REPEATS` runs using `perf stat --repeat`.
+
+### Usage
+
+```bash
+# Run with defaults (FOLDER_NAME=md_baseline, PARTICLES=200, REPEATS=5)
+make metrics
+
+# Customize folder, particle count, and repetitions
+make metrics FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=10
+```
+
+### What it does
+
+1. **Builds** `src/$(FOLDER_NAME)/md_profiling` for `$(PARTICLES)` particles.
+2. **Runs `perf stat --repeat $(REPEATS)`** on `task-clock,cycles,instructions`, saving the report to `results/$(FOLDER_NAME)/metric_N$(PARTICLES).txt`.
+3. **Moves simulation outputs** (`cp_average.txt`, `cp_output.txt`, `cp_traj.xyz`) into `results/$(FOLDER_NAME)/`.
+4. **Prints** the saved report to the terminal.
+
+---
+
+## Other Useful Commands
+
+### Compile only
+
+```bash
+make build FOLDER_NAME=md_baseline PARTICLES=800
+```
+
+### Clean temporary files
+
+Removes `src/$(FOLDER_NAME)/md_profiling`, `perf.data`, `perf.data.old`, and any root-level simulation outputs while preserving `results/`:
+
+```bash
+make clean FOLDER_NAME=md_baseline
+```
+
+### Preview commands without executing (dry run)
+
+```bash
+make -n hotspots FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=5
+make -n metrics  FOLDER_NAME=md_baseline PARTICLES=800 REPEATS=5
+```
+
+### Running on a SLURM cluster
+
+Prefix any `make` command with `srun`:
+
+```bash
+srun --partition=<partition> make hotspots FOLDER_NAME=md_baseline PARTICLES=200 REPEATS=5
+srun --partition=<partition> make metrics  FOLDER_NAME=md_baseline PARTICLES=200 REPEATS=5
+```
+
+---
+
+## Profiling a New Implementation Version
+
+1. Create a new subfolder under `src/` with your `.c` (or `.cpp`) file, e.g. `src/md_v1/MD.c`.
+2. Run `hotspots` and `metrics` pointing `FOLDER_NAME` to it:
+
+```bash
+make hotspots FOLDER_NAME=md_v1 PARTICLES=200 REPEATS=5
+make metrics  FOLDER_NAME=md_v1 PARTICLES=200 REPEATS=5
+```
+
+The binary will be compiled to `src/md_v1/md_profiling` and all reports and simulation outputs will be saved under `results/md_v1/`.
