@@ -1,0 +1,17 @@
+\begin{thebibliography}{1}
+
+\bibitem{foleylab-md}
+{FoleyLab}, ``{MolecularDynamics}: Simple molecular dynamics code for discovery-driven approach to real gas properties.'' GitHub repository.
+\newblock Accessed: Nov. 21, 2026. [Online]. Available: \url{https://github.com/FoleyLab/MolecularDynamics}.
+
+\bibitem{jones1924}
+J.~E. Jones, ``On the determination of molecular fields. {II}. {F}rom the equation of state of a gas,'' {\em Proc. R. Soc. Lond. A}, vol.~106, no.~738, pp.~463--477, 1924.
+
+\bibitem{lj-figure}
+TimeStep89, ``Graph of {Lennard-Jones} potential.'' Wikimedia Commons, Sep. 2020, licensed under CC BY 4.0.
+\newblock Accessed: Nov. 21, 2026. [Online]. Available: \url{https://commons.wikimedia.org/wiki/File:Graph_of_Lennard-Jones_potential.png}.
+
+\bibitem{amdahl1967}
+G.~M. Amdahl, ``Validity of the single processor approach to achieving large scale computing capabilities,'' in {\em Proc. AFIPS Spring Joint Computer Conf.}, (Atlantic City, NJ, USA), pp.~483--485, Apr. 1967.
+
+\end{thebibliography}
