@@ -27,7 +27,10 @@ obj/
 *.log
 outputdata.txt
 output/
-results/
+results/*/*.txt
+results/*/*.xyz
+results/*/*.data
+results/*/*.data.old
 tmp/
 src/*/md_profiling
 
