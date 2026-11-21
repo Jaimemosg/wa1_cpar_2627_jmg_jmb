@@ -29,7 +29,8 @@ outputdata.txt
 output/
 results/
 tmp/
+src/*/md_profiling
 
-# Deuacalion Documentation
+# Course Documentation
 cpar_docs
 plans
