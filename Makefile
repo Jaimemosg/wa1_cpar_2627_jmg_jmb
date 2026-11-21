@@ -376,8 +376,9 @@ roofline: build
 # ==============================================================================
 # 6. HOUSEKEEPING (`clean`)
 # ==============================================================================
-# Removes the compiled profiling binary, raw perf recordings, and simulation output files.
-# Note: $(RESULTS_FOLDER) is intentionally kept so your saved reports are preserved.
+# Removes the compiled profiling binary, raw perf recordings (root and results folder),
+# and root-level simulation output files.
+# Note: saved text reports in $(RESULTS_FOLDER) are preserved.
 #
 # rm                     Standard Unix utility to delete files.
 # --force                Deletes files without prompting and ignores missing files (short form: -f).
@@ -387,5 +388,7 @@ clean:
 		$(PROFILING_BINARY) \
 		perf.data \
 		perf.data.old \
+		$(RESULTS_FOLDER)/perf.data \
+		$(RESULTS_FOLDER)/perf.data.old \
 		$(SIM_OUTPUTS)
 

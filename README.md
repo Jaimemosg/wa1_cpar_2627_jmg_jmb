@@ -126,7 +126,7 @@ make build FOLDER_NAME=md_baseline PARTICLES=800
 
 ### Clean temporary files
 
-Removes `src/$(FOLDER_NAME)/md_profiling`, `perf.data`, `perf.data.old`, and any root-level simulation outputs while preserving `results/`:
+Removes `src/$(FOLDER_NAME)/md_profiling`, `perf.data` / `perf.data.old` (both in the root directory and in `results/$(FOLDER_NAME)/`), and any root-level simulation outputs while preserving saved reports in `results/`:
 
 ```bash
 make clean FOLDER_NAME=md_baseline
