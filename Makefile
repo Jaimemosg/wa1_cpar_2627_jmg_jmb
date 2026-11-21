@@ -281,6 +281,10 @@ hotspots: build
 # -o $(PROFILING_BINARY)               Sets the output executable path (./src/$(FOLDER_NAME)/md_profiling).
 
 build:
+	@if [ ! -d "$(SOURCE_DIR)" ]; then \
+		echo "Error: folder '$(SOURCE_DIR)' does not exist. Please create the folder first." >&2; \
+		exit 1; \
+	fi
 	@if [ -z "$(SOURCE_FILE)" ]; then \
 		echo "Error: no .c or .cpp source file found in $(SOURCE_DIR)" >&2; \
 		exit 1; \
