@@ -497,37 +497,53 @@ double Potential() {
 //   Uses the derivative of the Lennard-Jones potential to calculate
 //   the forces on each atom.  Then uses a = F/m to calculate the
 //   accelleration of each atom. 
-void computeAccelerations() {
-    int i, j, k;
-    double f, rSqd;
-    double rij[3]; // position of i relative to j
-    
-    
-    for (i = 0; i < N; i++) {  // set all accelerations to zero
-        for (k = 0; k < 3; k++) {
-            a[i][k] = 0;
-        }
+inline double ljForceFactor(double rSqd) {
+    const double inv2  = 1.0 / rSqd;
+    const double inv4  = inv2 * inv2;
+    const double inv8  = inv4 * inv4;
+    const double inv14 = inv8 * inv4 * inv2;
+    return 24.0 * (2.0 * inv14 - inv8);
+}
+
+inline void addNeighbourAccelerations(const double ri[3], int first, int last,
+                                      double ai[3]) {
+    double ax = 0.0, ay = 0.0, az = 0.0;
+
+    #pragma omp simd reduction(+:ax, ay, az)
+    for (int j = first; j < last; ++j) {
+        const double dx = ri[0] - r[j][0];
+        const double dy = ri[1] - r[j][1];
+        const double dz = ri[2] - r[j][2];
+
+        const double forceFactor = ljForceFactor(dx * dx + dy * dy + dz * dz);
+        ax += dx * forceFactor;
+        ay += dy * forceFactor;
+        az += dz * forceFactor;
     }
-    for (i = 0; i < N-1; i++) {   // loop over all distinct pairs i,j
-        for (j = i+1; j < N; j++) {
-            // initialize r^2 to zero
-            rSqd = 0;
-            
-            for (k = 0; k < 3; k++) {
-                //  component-by-componenent position of i relative to j
-                rij[k] = r[i][k] - r[j][k];
-                //  sum of squares of the components
-                rSqd += rij[k] * rij[k];
-            }
-            
-            //  From derivative of Lennard-Jones with sigma and epsilon set equal to 1 in natural units!
-            f = 24 * (2 * pow(rSqd, -7) - pow(rSqd, -4));
-            for (k = 0; k < 3; k++) {
-                //  from F = ma, where m = 1 in natural units!
-                a[i][k] += rij[k] * f;
-                a[j][k] -= rij[k] * f;
-            }
-        }
+
+    ai[0] += ax;
+    ai[1] += ay;
+    ai[2] += az;
+}
+
+void computeAccelerations() {
+
+    // Every particle has N - 1 neighbours, so equal contiguous blocks balance the work.
+    #pragma omp parallel for schedule(static)
+    for (int i = 0; i < N; ++i) {
+
+        // Private accumulator: a_i = sum_{j != i} g_ij.
+        double ai[3] = {0.0, 0.0, 0.0};
+
+        // All neighbours of i, split in two ranges only to skip j == i.
+        // Each pair is evaluated twice (once per owner): duplicated arithmetic
+        // instead of shared acceleration updates.
+        addNeighbourAccelerations(r[i], 0, i, ai);
+        addNeighbourAccelerations(r[i], i + 1, N, ai);
+
+        // Only the owner of particle i writes a_i.
+        for (int k = 0; k < 3; ++k)
+            a[i][k] = ai[k];
     }
 }
 
