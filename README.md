@@ -169,57 +169,29 @@ The binary will be compiled to `src/md_v1/md_profiling` and all reports and simu
 
 ## Algorithm A: particle and thread-count experiment
 
-Run from the project folder:
+From the project folder, run the benchmark and then collect the results:
 
 ```bash
 sh benchmark_particles.sh
+python3 scripts/aggregate_metrics.py --output results/metrics_summary.csv
 ```
 
-This benchmarks `md_a` with 200, 400, 800, 1600, and 3200 particles
-at each of 1, 2, and 4 OpenMP threads, with five repetitions per combination.
-Dynamic thread adjustment is disabled. The existing `inputdata.txt` supplies
-the same simulation parameters for every run. Compilation is outside the
-timing; elapsed time includes simulation file output.
+The benchmark tests **200, 400, 800, 1600, and 3200 particles** with
+**1, 2, and 4 threads**, repeating each combination **5 times**.
+It uses `inputdata.txt`. Timing includes simulation output but excludes compilation.
 
-Reports appear in the terminal and in
-`results/md_a_t<threads>/metric_N<particles>.txt`, keeping thread counts
-separate. Use `seconds time elapsed` to compare mean runtime. At a fixed
-particle count, speedup is the one-thread time divided by the multi-thread time.
-Rerunning replaces reports for the same configuration. Simulation output files
-are overwritten within each thread folder, leaving that thread count's final run.
-Existing reports in `results/md_a/` are preserved.
+- Individual reports: `results/md_a_t<threads>/metric_N<particles>.txt`
+- Combined results: `results/metrics_summary.csv`
 
-For a smaller test or custom experiment:
+The CSV includes runtime, reported uncertainty, speedup relative to one thread,
+and parallel efficiency. Speedup compares the same particle count;
+efficiency is speedup divided by threads (1.0 = 100%).
+
+For a smaller test:
 
 ```bash
 PARTICLE_COUNTS="200 400" THREAD_COUNTS="1 2" REPEATS=2 sh benchmark_particles.sh
 ```
 
-Generated reports remain excluded from Git by the existing `.gitignore` rules.
-
-
-### Aggregate particle/thread timing results
-
-After running the experiment, collect its reports with:
-
-```bash
-python3 scripts/aggregate_metrics.py --output results/metrics_summary.csv
-```
-
-The CSV contains particles, threads, repetition count (when reported), mean
-elapsed seconds, the elapsed error printed by perf, speedup relative to one
-thread at the same particle count, parallel efficiency (speedup / threads),
-time / particles squared, and source report path. Efficiency is a fraction:
-1.0 means 100%. The reported error is preserved as printed by perf; it is not
-recomputed or relabeled as a standard deviation.
-
-This collects existing summaries rather than averaging them again. Missing
-one-thread baselines leave speedup and efficiency blank. Invalid timing reports
-stop aggregation with an error. Only `results/md_a_t*/metric_N*.txt` is read;
-older reports in `results/md_a/` are excluded. Use comparable runs with the same
-input, compiler settings, and machine conditions. The benchmark script sets `LC_ALL=C` internally to produce consistent
-dot-decimal perf output for aggregation.
-
-Omit `--output` to print CSV to the terminal, or use `--results-dir PATH` to read
-another experiment directory. The output file is replaced on each invocation.
-The generated `results/metrics_summary.csv` is ignored by Git.
+Rerunning replaces matching reports. Simulation files retain only the final run
+for each thread count. Generated reports and the summary CSV are ignored by Git.
