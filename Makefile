@@ -192,7 +192,7 @@ INPUT_FILE       = ./inputdata.txt
 PROFILING_BINARY = ./$(SOURCE_DIR)/md_profiling
 RESULTS_FOLDER   = results/$(FOLDER_NAME)
 AGGREGATE_SCRIPT = ./scripts/aggregate_hotspots.py
-SIM_OUTPUTS      = cp_average.txt cp_output.txt cp_traj.xyz perf.data perf.data.old
+SIM_OUTPUTS      = cp_average.txt cp_output.txt cp_traj.xyz
 
 # Compiler optimization, profiling, and warning flags
 # -O3                       Enables aggressive speed optimizations (loop unrolling, vectorization).
@@ -264,7 +264,8 @@ hotspots: build
 			--call-graph none \
 			> $(RESULTS_FOLDER)/hotspots_self_N$(PARTICLES)_run$$i.txt; \
 	done
-	mv --force $(SIM_OUTPUTS) $(RESULTS_FOLDER)/
+	mv --force $(SIM_OUTPUTS) perf.data $(RESULTS_FOLDER)/
+	@if [ -f perf.data.old ]; then mv --force perf.data.old $(RESULTS_FOLDER)/; fi
 	python3 $(AGGREGATE_SCRIPT) \
 		--particles $(PARTICLES) \
 		--repeats $(REPEATS) \
