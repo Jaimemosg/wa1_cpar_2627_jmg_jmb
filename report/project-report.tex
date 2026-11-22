@@ -34,7 +34,7 @@ should not be used}
 \IEEEauthorblockA{\textit{Student} \\
 \textit{University of Minho}\\
 Braga, Portugal \\
-pgxxxxx@uminho.pt}
+pg63520@uminho.pt}
 \and
 \IEEEauthorblockN{Jorge Marco}
 \IEEEauthorblockA{\textit{Student} \\
@@ -110,17 +110,82 @@ $\mathbf a_i=\sum_{j\neq i}\mathbf g_{ij}$.
 \section{Methodology}
 \label{sec:methodology}
 
-The optimization follows five steps. 
+The optimization follows five steps.
+
 \subsection{Identify code blocks with high computation time.}The first step profiles
 the original code to identify the code blocks that consume most
 of the execution time. Optimizing the slowest blocks is the optimal
 optimizing strategy according to Amdahl's law~\cite{amdahl1967}.
 \begin{equation}
- S=\frac{1}{(1-p)+p/s}\le\frac{1}{1-p}.
+ S=\frac{1}{(1-p)+p/s}\le\frac{1}{1-p},
  \label{eq:amdahl}
 \end{equation}
+
+where $p$ is the fraction of execution time spent in the code block being parallelized. 
 According to this law, optimising the blocks with the largest $p$ yields
-the highest attainable speedup
+the highest attainable speedup.
+
+To measure each function's execution share $p$, we profile the baseline
+sequential code compiled with \texttt{gcc} using \texttt{-O3 -ffast-math}
+(so hot-spots reflect compiler-optimized code) together with \texttt{-g}
+and \texttt{-fno-omit-frame-pointer} to preserve symbols and frame pointers.
+Following the assignment guidelines, initial profiling uses $N=200$
+particles on the supplied argon input with \texttt{stdout} discarded.
+Using Linux \texttt{perf record}, we sample user-space CPU cycles at
+$10\,\text{kHz}$ (\texttt{--all-user --call-graph fp}) and extract flat
+per-function \emph{self-time} shares via
+\texttt{perf report --no-children --sort symbol}, isolating each function's
+own cost from its callees. To account for sampling variance, five
+independent runs are aggregated into mean overhead and sample standard
+deviation per function.
+
+\subsection{Parallelism alternatives within the hot-spots.}
+Consecutive time steps cannot be parallelized because each Verlet update
+depends on the previous step's positions and velocities; parallelism is
+therefore exploited within the two $\mathcal{O}(N^2)$ hot-spots,
+\texttt{Potential()} and \texttt{computeAccelerations()}, where positions
+$\mathbf{r}$ are read-only. In all three alternatives (\texttt{md\_a},
+\texttt{md\_b}, and \texttt{md\_c}), costly \texttt{sqrt}/\texttt{pow}
+calls are replaced by multiplications of $1/r_{ij}^2$, and
+\texttt{Potential()} is parallelized identically by exploiting pair
+symmetry~\eqref{eq:lj-pair-count} over $i<j$ with a scalar OpenMP
+reduction (\texttt{reduction(+:sum)}) and cyclic scheduling
+(\texttt{schedule(static, 1)}) to balance the triangular loop. The three
+alternatives differ in how \texttt{computeAccelerations()} handles data
+races on $\mathbf{a}$ and exploits vectorization:
+\begin{itemize}
+ \item \emph{Alternative A (\texttt{md\_a}, pair symmetry with array
+ reduction):} Preserves Newton's third law
+ ($\mathbf{g}_{ji}=-\mathbf{g}_{ij}$) over $i<j$, performing the minimum
+ $N(N-1)/2$ pair evaluations with \texttt{schedule(static, 1)} for load
+ balance and \texttt{reduction(+:a[:N][:3])} to eliminate races on
+ $\mathbf{a}_j$. This minimizes arithmetic but incurs per-thread
+ $N\times 3$ reduction buffers, cross-thread reduction overhead, and
+ updates to $\mathbf{a}_j$ that hinder SIMD vectorization.
+ \item \emph{Alternative B (\texttt{md\_b}, particle-based decomposition
+ with SIMD):} Instead of exploiting force symmetry, each thread computes
+ the full acceleration $\mathbf{a}_i=\sum_{j\neq i}\mathbf{g}_{ij}$ for
+ its assigned particles using a local accumulator and writes exclusively
+ to $\mathbf{a}_i$. Because every particle interacts with $N-1$ others,
+ a contiguous \texttt{schedule(static)} partition distributes the work
+ evenly. Moreover, dividing the inner loop into $[0,i)$ and $[i+1,N)$
+ avoids the $j\neq i$ condition and allows vectorization with
+ \texttt{\#pragma omp simd}. Although this approach evaluates each pair
+ twice ($N(N-1)$ interactions), it removes data races, reduction
+ overhead, and auxiliary thread buffers.
+ \item \emph{Alternative C (\texttt{md\_c}, strip-mined
+ auto-vectorization):} Extends the particle-based strategy of
+ \texttt{md\_b} to enable compiler auto-vectorization without
+ \texttt{\#pragma omp simd}. Each thread processes disjoint strips of
+ $8$ particles (filling one 512-bit ARM SVE vector), packing their
+ coordinates and accumulators into 64-byte-aligned local
+ Structure-of-Arrays (SoA) buffers. Splitting neighbors into two
+ off-diagonal intervals and a small diagonal tile yields unit-stride,
+ branch-free inner loops with independent lane accumulators.
+ Consequently, \texttt{gcc} vectorizes the kernel automatically, even
+ without cross-lane floating-point reductions, while keeping the
+ $N(N-1)$ evaluation cost of \texttt{md\_b}.
+\end{itemize}
 
 \section{Results}
 Profiling of the original code identifies the functions \texttt{Potential()} and
