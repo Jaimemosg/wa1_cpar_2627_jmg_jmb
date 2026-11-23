@@ -461,6 +461,12 @@ double Kinetic() { //Write Function here!
 }
 
 
+// Strip size for target particles processed together against each neighbour j.
+// 8 doubles fill 1 full 512-bit ARM SVE vector (Deucalion A64FX) or 2 AVX2
+// vectors (x86-64), keeping all local SoA coordinates and accumulators in
+// vector registers without spilling.
+constexpr int STRIP = 8;
+
 // Function to calculate the potential energy of the system
 inline double ljPairPotential(double rSqd) {
     const double s2  = sigma * sigma / rSqd;
@@ -469,35 +475,90 @@ inline double ljPairPotential(double rSqd) {
     return s12 - s6;
 }
 
+// Adds to pot[0..STRIP-1] the pair potentials between a full strip of STRIP
+// target particles stored in local SoA arrays and neighbours [first, last).
+// Because each lane k updates its own independent accumulator pot[k], there is
+// no cross-lane floating-point reduction, so GCC vectorizes the k loop
+// automatically even under strict IEEE-754 (without -ffast-math or
+// #pragma omp simd).
+inline void addPotentialRangeToFullStrip(const double (&rix)[STRIP],
+                                         const double (&riy)[STRIP],
+                                         const double (&riz)[STRIP],
+                                         int first, int last,
+                                         double (&pot)[STRIP]) {
+    for (int j = first; j < last; ++j) {
+        const double rjx = r[j][0];
+        const double rjy = r[j][1];
+        const double rjz = r[j][2];
+
+        for (int k = 0; k < STRIP; ++k) {
+            const double dx = rix[k] - rjx;
+            const double dy = riy[k] - rjy;
+            const double dz = riz[k] - rjz;
+
+            pot[k] += ljPairPotential(dx * dx + dy * dy + dz * dz);
+        }
+    }
+}
+
+// Handles upper-triangle pairs (k < m) among particles inside the same strip
+// [ii, iend), evaluating each distinct pair once.
+inline void addPotentialDiagonalTile(const double rix[],
+                                     const double riy[],
+                                     const double riz[],
+                                     int len,
+                                     double pot[]) {
+    for (int k = 0; k < len - 1; ++k) {
+        for (int m = k + 1; m < len; ++m) {
+            const double dx = rix[k] - rix[m];
+            const double dy = riy[k] - riy[m];
+            const double dz = riz[k] - riz[m];
+
+            pot[k] += ljPairPotential(dx * dx + dy * dy + dz * dz);
+        }
+    }
+}
+
 double Potential() {
 
     double sum = 0.0;
 
-    // Row i has N - 1 - i pairs (i < j); cyclic rows balance this triangle.
-    // The reduction combines the per-thread partial sums.
+    // Strip ii has N - iend off-diagonal neighbours (i < j); cyclic strips
+    // balance this triangle. The reduction combines the per-thread partial sums.
     #pragma omp parallel for reduction(+:sum) schedule(static, 1)
-    for (int i = 0; i < N - 1; ++i) {
-        const double* ri = r[i];
+    for (int ii = 0; ii < N; ii += STRIP) {
+        const int iend = (ii + STRIP < N) ? (ii + STRIP) : N;
+        const int len  = iend - ii;
 
-        // Each distinct pair (i, j) is evaluated once.
-        for (int j = i + 1; j < N; ++j) {
-            const double dx = ri[0] - r[j][0];
-            const double dy = ri[1] - r[j][1];
-            const double dz = ri[2] - r[j][2];
+        // Gather the strip's target positions once into 64-byte-aligned local
+        // SoA arrays so the inner loop has unit-stride vector accesses without
+        // AoS de-interleaving shuffles.
+        alignas(64) double rix[STRIP], riy[STRIP], riz[STRIP];
+        alignas(64) double pot[STRIP] = {};
 
-            sum += ljPairPotential(dx * dx + dy * dy + dz * dz);
+        for (int k = 0; k < len; ++k) {
+            rix[k] = r[ii + k][0];
+            riy[k] = r[ii + k][1];
+            riz[k] = r[ii + k][2];
+        }
+
+        // Evaluate each distinct pair (i, j) with i < j once: first the upper
+        // triangle inside [ii, iend), then all neighbours j in [iend, N).
+        // When len < STRIP (the last remainder strip), iend == N so [iend, N)
+        // is empty and only the diagonal tile is needed.
+        addPotentialDiagonalTile(rix, riy, riz, len, pot);
+        if (len == STRIP) {
+            addPotentialRangeToFullStrip(rix, riy, riz, iend, N, pot);
+        }
+
+        for (int k = 0; k < len; ++k) {
+            sum += pot[k];
         }
     }
 
     // The original code counts each pair twice, as (i, j) and (j, i).
     return 2.0 * 4.0 * epsilon * sum;
 }
-
-// Strip size for target particles processed together against each neighbour j.
-// 8 doubles fill 1 full 512-bit ARM SVE vector (Deucalion A64FX) or 2 AVX2
-// vectors (x86-64), keeping all local SoA coordinates and accumulators in
-// vector registers without spilling.
-constexpr int STRIP = 8;
 
 // Lennard-Jones pair acceleration factor f(r^2) such that g_ij = f * r_ij,
 // with f = 24 * (2/r^14 - 1/r^8). Powers of 1/r^2 replace std::pow so the
