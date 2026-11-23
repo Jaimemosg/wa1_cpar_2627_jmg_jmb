@@ -34,8 +34,10 @@ results/*/*.data.old
 tmp/
 src/*/md_profiling
 
+# External code (iterations)
+external
+
 # Course Documentation
 cpar_docs
+
 plans
-# Aggregated benchmark output
-/results/metrics_summary.csv

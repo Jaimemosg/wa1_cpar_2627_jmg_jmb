@@ -124,9 +124,9 @@ OMP_NUM_THREADS=4 make metrics FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
 make build FOLDER_NAME=md_baseline PARTICLES=800
 ```
 
-### Clean temporary files
+### Clean generated files
 
-Removes `src/$(FOLDER_NAME)/md_profiling`, `perf.data` / `perf.data.old` (both in the root directory and in `results/$(FOLDER_NAME)/`), and any root-level simulation outputs while preserving saved reports in `results/`:
+Removes `src/$(FOLDER_NAME)/md_profiling`, root-level `perf.data*` and simulation outputs, and all generated files in `results/$(FOLDER_NAME)/` (`*.txt`, `*.xyz`, `*.data`, `*.data.old`) while keeping `.gitkeep`:
 
 ```bash
 make clean FOLDER_NAME=md_baseline
