@@ -2,4 +2,4 @@ $pdf_mode = 1;
 $out_dir = 'auxiliary';
 $aux_dir = 'auxiliary';
 $out2_dir = '.';
-@out2_exts = ('pdf');
+@out2_exts = ('pdf', 'synctex', 'synctex.gz');

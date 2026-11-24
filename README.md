@@ -165,33 +165,3 @@ OMP_NUM_THREADS=4 make metrics  FOLDER_NAME=md_a PARTICLES=800 OPENMP=1
 ```
 
 The binary will be compiled to `src/md_v1/md_profiling` and all reports and simulation outputs will be saved under `results/md_v1/`.
-
-
-## Algorithm A: particle and thread-count experiment
-
-From the project folder, run the benchmark and then collect the results:
-
-```bash
-sh benchmark_particles.sh
-python3 scripts/aggregate_metrics.py --output results/metrics_summary.csv
-```
-
-The benchmark tests **200, 400, 800, 1600, and 3200 particles** with
-**1, 2, and 4 threads**, repeating each combination **5 times**.
-It uses `inputdata.txt`. Timing includes simulation output but excludes compilation.
-
-- Individual reports: `results/md_a_t<threads>/metric_N<particles>.txt`
-- Combined results: `results/metrics_summary.csv`
-
-The CSV includes runtime, reported uncertainty, speedup relative to one thread,
-and parallel efficiency. Speedup compares the same particle count;
-efficiency is speedup divided by threads (1.0 = 100%).
-
-For a smaller test:
-
-```bash
-PARTICLE_COUNTS="200 400" THREAD_COUNTS="1 2" REPEATS=2 sh benchmark_particles.sh
-```
-
-Rerunning replaces matching reports. Simulation files retain only the final run
-for each thread count. Generated reports and the summary CSV are ignored by Git.

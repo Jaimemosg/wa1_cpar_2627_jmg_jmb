@@ -4,25 +4,40 @@
 \citation{lj-figure}
 \citation{lj-figure}
 \citation{amdahl1967}
-\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {II}Background}{1}{}\protected@file@percent }
-\newlabel{sec:background}{{II}{1}{}{section.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction and Background}{1}{}\protected@file@percent }
 \newlabel{eq:lj-potential}{{1}{1}{}{equation.1}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Lennard-Jones potential $V(r)$ as a function of the interparticle distance~\cite  {lj-figure}. Image by TimeStep89, licensed under CC BY 4.0 (\url {https://creativecommons.org/licenses/by/4.0/}); unmodified.}}{1}{}\protected@file@percent }
 \newlabel{fig:lj-potential}{{1}{1}{}{figure.1}{}}
 \newlabel{eq:lj-pair-count}{{2}{1}{}{equation.2}{}}
 \newlabel{eq:lj-reduced-acceleration}{{3}{1}{}{equation.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {III}Methodology}{1}{}\protected@file@percent }
-\newlabel{sec:methodology}{{III}{1}{}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Identify code blocks with high computation time.}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {II}Methodology}{1}{}\protected@file@percent }
+\newlabel{sec:methodology}{{II}{1}{}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Identify code blocks with high computation time.}{1}{}\protected@file@percent }
 \newlabel{eq:amdahl}{{4}{1}{}{equation.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Parallelism alternatives within the hot-spots.}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Vectorization analysis.}{1}{}\protected@file@percent }
+\newlabel{sec:vec-method}{{\mbox  {II-B}}{1}{}{subsection.2.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{1}{}\protected@file@percent }
 \bibstyle{ieeetr}
 \bibdata{references}
 \bibcite{foleylab-md}{1}
 \bibcite{jones1924}{2}
 \bibcite{lj-figure}{3}
 \bibcite{amdahl1967}{4}
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Results}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Vectorization}{2}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Alternative A on one A64FX core ($N=800$, mean of 5 runs). SVE ops: static counts of selected SVE arithmetic instructions in \texttt  {Potential()} (P) and \texttt  {computeAccelerations()} (cA).}}{2}{}\protected@file@percent }
+\newlabel{tab:vec}{{I}{2}{}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Scalability}{2}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Speedup of Alternative A against the number of threads on one A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal speedup $S=p$.}}{2}{}\protected@file@percent }
+\newlabel{fig:speedup}{{2}{2}{}{figure.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces CPU time and wall time of Alternative A on one A64FX node ($N=1600$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{2}{}\protected@file@percent }
+\newlabel{tab:cpu-time}{{II}{2}{}{table.2}{}}
 \@writefile{toc}{\contentsline {section}{References}{2}{}\protected@file@percent }
-\gdef \@abspage@last{2}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Profiling methodology}{2}{}\protected@file@percent }
+\newlabel{app:method}{{A}{2}{}{section.Appendix.A}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Vectorization methodology and assembly analysis}{3}{}\protected@file@percent }
+\newlabel{app:asm}{{B}{3}{}{section.Appendix.B}{}}
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  C: Scalability methodology}{3}{}\protected@file@percent }
+\newlabel{app:scaling}{{C}{3}{}{section.Appendix.C}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Inner loop over $j$ of \texttt  {Potential()} (Alternative A), non-vectorized (left) and vectorized with SVE (right).}}{4}{}\protected@file@percent }
+\newlabel{fig:asm}{{3}{4}{}{figure.3}{}}
+\gdef \@abspage@last{4}

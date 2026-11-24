@@ -45,14 +45,10 @@ pg65303@uminho.pt}
 
 \maketitle
 
-\section{Introduction}
-In this work our goal is to anayze and optimise a caculation of classical molecular dynamics (MD). It is
-based in an original code from~\cite{foleylab-md}.
-
-% Background for the supplied MD.cpp; implementation observations are kept explicit.
-\section{Background}
-\label{sec:background}
-
+\section{Introduction and Background}
+This work analyses and optimises a classical molecular dynamics (MD)
+simulation based on the code from~\cite{foleylab-md}, focusing on SIMD
+vectorization and shared-memory parallelization with OpenMP.
 Classical molecular dynamics follows the motion of $N$
 interacting particles by numerically integrating Newton's
 equations of motion. Only the expressions needed for the
@@ -74,7 +70,7 @@ where $\varepsilon$ and $\sigma$ set the energy and length scales
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{lennard-jones-potential.png}
+\includegraphics[width=0.8\columnwidth]{lennard-jones-potential.png}
 \caption{Lennard-Jones potential $V(r)$ as a function of the
 interparticle distance~\cite{lj-figure}. Image by TimeStep89,
 licensed under CC BY 4.0
@@ -89,7 +85,12 @@ unique interactions is
  \label{eq:lj-pair-count}
 \end{equation}
 
-In reduced LJ units, the acceleration contribution to particle
+Direct evaluation of all particle pairs therefore requires $O(N^2)$
+work, motivating the optimization and parallelization of the interaction
+calculations.
+
+In reduced LJ units, with $\varepsilon=\sigma=m=1$, where $m$ is the
+particle mass, the acceleration contribution to particle
 $i$ from particle $j$, with $\mathbf r_{ij}=\mathbf r_i-\mathbf r_j$
 and $r_{ij}=\|\mathbf r_{ij}\|$, is
 \begin{equation}
@@ -110,89 +111,259 @@ $\mathbf a_i=\sum_{j\neq i}\mathbf g_{ij}$.
 \section{Methodology}
 \label{sec:methodology}
 
-The optimization follows five steps.
 
 \subsection{Identify code blocks with high computation time.}The first step profiles
 the original code to identify the code blocks that consume most
-of the execution time. Optimizing the slowest blocks is the optimal
-optimizing strategy according to Amdahl's law~\cite{amdahl1967}.
+of the execution time. Amdahl's law motivates prioritising functions
+that account for a large fraction of execution time~\cite{amdahl1967}.
 \begin{equation}
  S=\frac{1}{(1-p)+p/s}\le\frac{1}{1-p},
  \label{eq:amdahl}
 \end{equation}
 
 where $p$ is the fraction of execution time spent in the code block being parallelized. 
-According to this law, optimising the blocks with the largest $p$ yields
-the highest attainable speedup.
+For a given $s$, optimising blocks with a larger $p$ yields a greater
+overall speedup. The baseline is compiled with GCC using performance optimisation flags.
+Five independent runs are aggregated. Further compilation, recording and reporting details
+are provided in Appendix~\ref{app:method}.
 
-To measure each function's execution share $p$, we profile the baseline
-sequential code compiled with \texttt{gcc} using \texttt{-O3 -ffast-math}
-(so hot-spots reflect compiler-optimized code) together with \texttt{-g}
-and \texttt{-fno-omit-frame-pointer} to preserve symbols and frame pointers.
-Following the assignment guidelines, initial profiling uses $N=200$
-particles on the supplied argon input with \texttt{stdout} discarded.
-Using Linux \texttt{perf record}, we sample user-space CPU cycles at
-$10\,\text{kHz}$ (\texttt{--all-user --call-graph fp}) and extract flat
-per-function \emph{self-time} shares via
-\texttt{perf report --no-children --sort symbol}, isolating each function's
-own cost from its callees. To account for sampling variance, five
-independent runs are aggregated into mean overhead and sample standard
-deviation per function.
 
-\subsection{Parallelism alternatives within the hot-spots.}
-Consecutive time steps cannot be parallelized because each Verlet update
-depends on the previous step's positions and velocities; parallelism is
-therefore exploited within the two $\mathcal{O}(N^2)$ hot-spots,
-\texttt{Potential()} and \texttt{computeAccelerations()}, where positions
-$\mathbf{r}$ are read-only. In all three alternatives (\texttt{md\_a},
-\texttt{md\_b}, and \texttt{md\_c}), costly \texttt{sqrt}/\texttt{pow}
-calls are replaced by multiplications of $1/r_{ij}^2$, and
-\texttt{Potential()} is parallelized identically by exploiting pair
-symmetry~\eqref{eq:lj-pair-count} over $i<j$ with a scalar OpenMP
-reduction (\texttt{reduction(+:sum)}) and cyclic scheduling
-(\texttt{schedule(static, 1)}) to balance the triangular loop. The three
-alternatives differ in how \texttt{computeAccelerations()} handles data
-races on $\mathbf{a}$ and exploits vectorization:
-\begin{itemize}
- \item \emph{Alternative A (\texttt{md\_a}, pair symmetry with array
- reduction):} Preserves Newton's third law
- ($\mathbf{g}_{ji}=-\mathbf{g}_{ij}$) over $i<j$, performing the minimum
- $N(N-1)/2$ pair evaluations with \texttt{schedule(static, 1)} for load
- balance and \texttt{reduction(+:a[:N][:3])} to eliminate races on
- $\mathbf{a}_j$. This minimizes arithmetic but incurs per-thread
- $N\times 3$ reduction buffers, cross-thread reduction overhead, and
- updates to $\mathbf{a}_j$ that hinder SIMD vectorization.
- \item \emph{Alternative B (\texttt{md\_b}, particle-based decomposition
- with SIMD):} Instead of exploiting force symmetry, each thread computes
- the full acceleration $\mathbf{a}_i=\sum_{j\neq i}\mathbf{g}_{ij}$ for
- its assigned particles using a local accumulator and writes exclusively
- to $\mathbf{a}_i$. Because every particle interacts with $N-1$ others,
- a contiguous \texttt{schedule(static)} partition distributes the work
- evenly. Moreover, dividing the inner loop into $[0,i)$ and $[i+1,N)$
- avoids the $j\neq i$ condition and allows vectorization with
- \texttt{\#pragma omp simd}. Although this approach evaluates each pair
- twice ($N(N-1)$ interactions), it removes data races, reduction
- overhead, and auxiliary thread buffers.
- \item \emph{Alternative C (\texttt{md\_c}, strip-mined
- auto-vectorization):} Extends the particle-based strategy of
- \texttt{md\_b} to enable compiler auto-vectorization without
- \texttt{\#pragma omp simd}. Each thread processes disjoint strips of
- $8$ particles (filling one 512-bit ARM SVE vector), packing their
- coordinates and accumulators into 64-byte-aligned local
- Structure-of-Arrays (SoA) buffers. Splitting neighbors into two
- off-diagonal intervals and a small diagonal tile yields unit-stride,
- branch-free inner loops with independent lane accumulators.
- Consequently, \texttt{gcc} vectorizes the kernel automatically, even
- without cross-lane floating-point reductions, while keeping the
- $N(N-1)$ evaluation cost of \texttt{md\_b}.
-\end{itemize}
+
+\subsection{Vectorization analysis.}
+\label{sec:vec-method}
+SIMD vectorization allows a processor core to perform the same arithmetic
+operation on several data values at once. To assess its benefit, two
+builds of the same implementation are compared, with automatic
+vectorization enabled and disabled. Both run on a single core without
+OpenMP, separating vectorization from parallel execution across cores.
+Wall-clock time, processor cycles, and executed instruction counts are
+compared over five runs. The generated machine code is also inspected
+to establish which interaction loops use vector instructions.
+Implementation, compilation, and measurement details are provided in
+Appendix~\ref{app:asm}.
 
 \section{Results}
-Profiling of the original code identifies the functions \texttt{Potential()} and
-\texttt{computeAccelerations()} as the most expensive, consuming 56\% and 41\% of
-the total execution time, respectively.
+Profiling the baseline identifies \texttt{Potential()} and
+\texttt{computeAccelerations()} as the main computational bottlenecks,
+accounting for approximately 56\% and 41\% of the sampled execution
+time, respectively, and approximately 97\% together.
+This makes the interaction calculations the primary targets for optimisation.
+
+\subsection{Vectorization}
+Table~\ref{tab:vec} compares Alternative A with automatic vectorization
+enabled and disabled on an A64FX core. Vectorization reduces wall-clock
+time by approximately a quarter, while retiring fewer instructions and
+consuming fewer processor cycles. Both builds produce identical
+reported averages.
+
+The assembly analysis in Appendix~\ref{app:asm} shows that the inner
+loop of \texttt{Potential()} uses SVE instructions to evaluate
+several particle pairs per iteration. In contrast, the interaction loop
+in \texttt{computeAccelerations()} remains scalar. These observations
+indicate that the measured improvement comes mainly from vectorizing
+the potential-energy calculation, while the acceleration calculation
+remains a target for further optimisation.
+
+\begin{table}[htbp]
+\caption{Alternative A on one A64FX core ($N=800$, mean of 5 runs).
+SVE ops: static counts of selected SVE arithmetic instructions in \texttt{Potential()} (P) and
+\texttt{computeAccelerations()} (cA).}
+\label{tab:vec}
+\centering
+\begin{tabular}{lccccc}
+\hline
+Build & Time (s) & Cycles ($10^9$) & Instr. ($10^9$) & \multicolumn{2}{c}{SVE ops} \\
+      &          &                 &                 & P & cA \\
+\hline
+novec & 3.152 & 6.25 & 3.19 & 0  & 0 \\
+vec   & 2.377 & 4.70 & 2.29 & 11 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Scalability}
+Fig.~\ref{fig:speedup} shows how Alternative A scales as the number
+of threads increases on an A64FX node. Scaling is initially close to
+ideal, reaching 93\% parallel efficiency at 12 threads, but departs
+from this trend at higher thread counts. At 48 threads, execution is
+about 27 times faster than with one thread, although efficiency falls
+to 57\%. Using more threads therefore continues to reduce execution
+time, with diminishing gains.
+Measurement details are provided in Appendix~\ref{app:scaling}.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.7\columnwidth]{speedup_N1600.png}
+\caption{Speedup of Alternative A against the number of threads on one
+A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal
+speedup $S=p$.}
+\label{fig:speedup}
+\end{figure}
+
+The increasing CPU time and instruction count in
+Table~\ref{tab:cpu-time} indicate growing parallel overhead. With less
+work per thread, synchronization and the combination of acceleration
+contributions may become relatively more costly. Thread sweeps with
+larger particle counts and measurements of synchronization costs and
+memory traffic could help establish whether coordination or memory
+limitations explain the efficiency decrease.
+
+\begin{table}[htbp]
+\caption{CPU time and wall time of Alternative A on one A64FX node
+($N=1600$, mean of 5 runs). Instructions and cycles are summed over all
+threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
+\label{tab:cpu-time}
+\centering
+\begin{tabular}{rrrrrr}
+\hline
+$p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
+\hline
+1  &  9.13 & 2.05 &  9.36 & 9.36 & 9.39 \\
+2  &  9.24 & 2.03 &  9.39 & 4.69 & 4.73 \\
+4  &  9.47 & 1.99 &  9.43 & 2.36 & 2.40 \\
+8  &  9.87 & 1.93 &  9.51 & 1.19 & 1.23 \\
+12 & 10.29 & 1.87 &  9.61 & 0.80 & 0.84 \\
+24 & 12.32 & 1.63 & 10.06 & 0.42 & 0.47 \\
+48 & 22.75 & 1.11 & 12.66 & 0.26 & 0.34 \\
+\hline
+\end{tabular}
+\end{table}
 
 \bibliographystyle{ieeetr}
 \bibliography{references}
+
+\appendices
+\section{Profiling methodology}
+\label{app:method}
+To estimate each function's execution share $p$, the baseline sequential
+code is profiled with $N=200$ particles on the supplied argon input:\par
+{\raggedright
+\begin{IEEEdescription}[\IEEEsetlabelwidth{Compile:}]
+  \item[Compile:] \texttt{gcc -O3 -ffast-math}, so the hot-spots reflect
+    optimized code, plus \texttt{-g -fno-omit-frame-pointer}, so
+    \texttt{perf} can resolve function names and call stacks.
+  \item[Record:] \texttt{perf record -F 10000 --all-user --call-graph fp},
+    which samples user-space cycles at 10\,kHz with frame-pointer call
+    stacks. It runs 5 times, with \texttt{stdout} discarded.
+  \item[Report:] Each run is processed using
+    \texttt{perf report --no-children --sort symbol} to obtain
+    per-function self overhead, excluding callees. The resulting
+    percentages are aggregated using
+    \texttt{scripts/aggregate\_hotspots.py} as the mean
+    $\pm$ sample standard deviation over the five runs.
+\end{IEEEdescription}\par}
+
+\section{Vectorization methodology and assembly analysis}
+\label{app:asm}
+Alternative A evaluates each distinct particle pair once and computes
+inverse powers through multiplications. It is tested with $N=800$
+on one A64FX core of Deucalion, without OpenMP. The processor's
+512-bit SVE vectors hold eight double-precision values.
+
+{\raggedright
+\begin{IEEEdescription}[\IEEEsetlabelwidth{Compile:}]
+  \item[Compile:] Both builds use the flags in
+    Appendix~\ref{app:method} plus \texttt{-march=native}.
+    The \emph{novec} build additionally uses
+    \texttt{-fno-tree-vectorize -fno-tree-slp-vectorize} to disable
+    automatic vectorization.
+  \item[Record:] The script \texttt{scripts/run\_a\_serial.sh}
+    measures wall-clock time, cycles, and retired instructions with
+    \texttt{perf stat} over five runs per build.
+  \item[Report:] The loops are inspected with \texttt{objdump}, and
+    \texttt{scripts/count\_sve\_math.sh} counts selected SVE arithmetic
+    instructions in each function's disassembly. These static counts
+    complement loop inspection; they do not measure executed
+    instructions or, when zero, prove the absence of all vectorization.
+\end{IEEEdescription}\par}
+
+Fig.~\ref{fig:asm} compares the \texttt{Potential()} inner loops
+extracted with \texttt{objdump}. The scalar loop processes one pair
+per iteration; the SVE loop processes up to eight. Predication handles
+the final partial group, and \texttt{faddv} combines the partial sums.
+
+\begin{figure*}[!t]
+\centering
+\begin{minipage}[t]{0.42\textwidth}
+\footnotesize
+\textbf{novec} (scalar)
+\begin{verbatim}
+ldp    d30, d29, [x0]
+fsub   d29, d25, d29
+fsub   d30, d26, d30
+fmul   d29, d29, d29
+fmadd  d30, d30, d30, d29
+ldr    d31, [x0, #16]
+fsub   d31, d27, d31
+fmadd  d31, d31, d31, d30
+fdiv   d31, d24, d31
+fmul   d30, d31, d31
+add    x0, x0, #0x18
+fmul   d31, d30, d31
+fsub   d30, d31, d23
+fmadd  d28, d31, d30, d28
+cmp    x1, x0
+b.ne   <loop>
+\end{verbatim}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.52\textwidth}
+\footnotesize
+\textbf{vec} (SVE, up to 8 pairs per iteration)
+\begin{verbatim}
+ld3d    {z25.d-z27.d}, p6/z, [x1]
+fsub    z31.d, z22.d, z26.d
+fsub    z30.d, z23.d, z25.d
+fmul    z29.d, z31.d, z31.d
+fmad    z30.d, p7/m, z30.d, z29.d
+incb    x1, all, mul #3
+fsub    z31.d, z24.d, z27.d
+fmad    z31.d, p7/m, z31.d, z30.d
+fdivr   z31.d, p7/m, z31.d, z21.d
+fmul    z30.d, z31.d, z31.d
+fmul    z31.d, z30.d, z31.d
+movprfx z30, z31
+fsub    z30.d, p7/m, z30.d, #1.0
+fmla    z28.d, p6/m, z30.d, z31.d
+whilelo p6.d, w0, w2
+incd    x0
+b.ne    <loop>
+faddv   d28, p7, z28.d    // after loop
+\end{verbatim}
+\end{minipage}
+\caption{Inner loop over $j$ of \texttt{Potential()} (Alternative A),
+non-vectorized (left) and vectorized with SVE (right).}
+\label{fig:asm}
+\end{figure*}
+
+\section{Scalability methodology}
+\label{app:scaling}
+Alternative A is tested with $N=1600$ on one 48-core A64FX node
+of Deucalion, using 1, 2, 4, 8, 12, 24, and 48 threads.
+
+{\raggedright
+\begin{IEEEdescription}[\IEEEsetlabelwidth{Compile:}]
+  \item[Compile:] The flags in Appendix~\ref{app:method} are combined
+    with \texttt{-march=native -fopenmp}. The same OpenMP build is
+    used for the one-thread reference and all multithreaded runs.
+  \item[Record:] The script \texttt{scripts/run\_a\_scaling.sh}
+    sets \texttt{OMP\_NUM\_THREADS} and measures wall-clock time,
+    cycles, and retired instructions using \texttt{perf stat},
+    with five runs per thread count.
+  \item[Report:] Speedup is $S=T_1/T_p$ and parallel efficiency is
+    $S/p$, where $p$ is the number of threads and $T_p$ is the mean
+    wall-clock time. Instructions and cycles are summed across
+    threads, and CPI is the ratio of total cycles to total instructions.
+\end{IEEEdescription}\par}
+
+The CPU time in Table~\ref{tab:cpu-time} is estimated using
+\begin{equation}
+ T_{\mathrm{CPU}}=\mathrm{Instructions}\times\mathrm{CPI}
+ \times T_{\mathrm{clock}},
+\end{equation}
+with $T_{\mathrm{clock}}=0.5$\,ns for the 2.0\,GHz clock.
+This is the aggregate CPU time across threads; $T_{\mathrm{CPU}}/p$
+provides a comparison with wall-clock time under full utilisation
+of all allocated cores.
 
 \end{document}
