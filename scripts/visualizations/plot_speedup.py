@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Plot speedup vs threads (linear axes) from the run_a_scaling.sh results.
+"""Plot speedup vs threads (linear axes) from the run_<ver>_scaling.sh results.
 
 Reads the wall time ("seconds time elapsed") from
     <results>/t<threads>/metric_N<N>.txt
 for every thread count found at the chosen N, computes S = T1 / Tp and
 plots it against the ideal S = p.
 
-Usage (from the wa1_jj/ folder):
+Usage (from the project root folder):
     python3 scripts/visualizations/plot_speedup.py
     python3 scripts/visualizations/plot_speedup.py --particles 1600 \
         --results results/deucalion/md_a_scaling --output report/images/speedup_N1600.png
+    python3 scripts/visualizations/plot_speedup.py --particles 1600 \
+        --results results/deucalion/md_c_scaling --output report/images/speedup_c_N1600.png
 """
 import argparse
 import re
@@ -19,6 +21,17 @@ import matplotlib.pyplot as plt
 
 # perf line:   0.465253 +- 0.000698 seconds time elapsed  ( +-  0.15% )
 ELAPSED_RE = re.compile(r"^\s*([\d.]+)\s+\+-\s+([\d.]+)\s+seconds time elapsed", re.M)
+VERSION_RE = re.compile(r"md_([a-zA-Z0-9]+)_scaling$")
+
+
+def infer_version(results: Path):
+    """Infer (label, suffix) from a results folder name such as md_c_scaling."""
+    match = VERSION_RE.search(results.name)
+    if match:
+        ver = match.group(1).lower()
+        suffix = "" if ver == "a" else f"_{ver}"
+        return f"Version {ver.upper()}", suffix
+    return results.name, f"_{results.name}"
 
 
 def read_times(results, particles):
@@ -36,10 +49,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--particles", type=int, default=1600)
     parser.add_argument("--results", type=Path, default=Path("results/deucalion/md_a_scaling"))
+    parser.add_argument("--label", type=str, default=None,
+                        help="Version label for the plot title (default: inferred from --results)")
     parser.add_argument("--output", type=Path, default=None,
-                        help="PNG file (default: report/images/speedup_N<particles>.png)")
+                        help="PNG file (default: report/images/speedup[_<ver>]_N<particles>.png)")
     args = parser.parse_args()
-    output = args.output or Path(f"report/images/speedup_N{args.particles}.png")
+    inferred_label, suffix = infer_version(args.results)
+    label = args.label or inferred_label
+    output = args.output or Path(f"report/images/speedup{suffix}_N{args.particles}.png")
 
     times = read_times(args.results, args.particles)
     if 1 not in times:
@@ -64,7 +81,7 @@ def main():
 
     ax.set_xlabel("Threads")
     ax.set_ylabel("Speedup")
-    ax.set_title(f"Version A speedup, N = {args.particles} (A64FX)")
+    ax.set_title(f"{label} speedup, N = {args.particles} (A64FX)")
     ax.set_xticks(threads)
     ax.set_xlim(0, max_p + 2)
     ax.set_ylim(0, max_p + 2)
