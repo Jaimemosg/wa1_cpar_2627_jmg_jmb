@@ -1,14 +1,14 @@
 # Fdb version 4
-["bibtex auxiliary/project-report"] 1795519722.41046 "auxiliary/project-report.aux" "auxiliary/project-report.bbl" "auxiliary/project-report" 1795519723.33451 0
-  "./references.bib" 1795292638.84061 3686 763558d7ed25d08afe56f3c535507daf ""
+["bibtex auxiliary/project-report"] 1795529701.21689 "auxiliary/project-report.aux" "auxiliary/project-report.bbl" "auxiliary/project-report" 1795529701.65913 0
+  "./references.bib" 1795298282.33551 3686 763558d7ed25d08afe56f3c535507daf ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/ieeetr.bst" 1292289607 18361 1a00e58565e7f19bf2b3e1bfb82254ae ""
-  "auxiliary/project-report.aux" 1795519723.10475 3699 fd17647e102befdcc5a9f134a7a7ccdb "pdflatex"
+  "auxiliary/project-report.aux" 1795529701.55509 4597 9208d94bbb509b291fe48a8104b48289 "pdflatex"
   (generated)
   "auxiliary/project-report.bbl"
   "auxiliary/project-report.blg"
   (rewritten before read)
-["pdflatex"] 1795519722.50324 "project-report.tex" "auxiliary/project-report.pdf" "project-report" 1795519723.33469 0
-  "/etc/texmf/web2c/texmf.cnf" 1793001259.44381 475 c0e671620eb5563b2130f56340a5fde8 ""
+["pdflatex"] 1795529701.25775 "project-report.tex" "auxiliary/project-report.pdf" "project-report" 1795529701.65925 0
+  "/etc/texmf/web2c/texmf.cnf" 1794602967.76204 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -156,14 +156,15 @@
   "/usr/share/texlive/texmf-dist/tex/latex/xcolor/xcolor.sty" 1727642399 55384 b454dec21c2d9f45ec0b793f0995b992 ""
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1769369718 41603 27f93b3067076450172040dcd57ca8b3 ""
   "/usr/share/texmf/web2c/texmf.cnf" 1769369718 41603 27f93b3067076450172040dcd57ca8b3 ""
-  "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1793004681 5418024 d27383b0a8fadef44c19c8c5a157ff8e ""
-  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1794421174 2265698 38246dc75062b7a063365142c6d11011 ""
-  "auxiliary/IEEEtran.cls" 1795292638.83306 288304 b67b6fc6c2abb39f9b461923f5199343 ""
-  "auxiliary/project-report.aux" 1795519723.10475 3699 fd17647e102befdcc5a9f134a7a7ccdb "pdflatex"
-  "auxiliary/project-report.bbl" 1795519722.49375 1017 5260c458382810316fc1f18baa325721 "bibtex auxiliary/project-report"
-  "images/lennard-jones-potential.png" 1795292638.83768 86852 03820d6066a84abc87976ae2b858e458 ""
-  "images/speedup_N1600.png" 1795506149.93271 79579 963fec9b5b50ef57baa0aaf446206f5d ""
-  "project-report.tex" 1795519720.97973 14645 4c60e3ec022569523a93c2b898a4a37f ""
+  "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1795304659 5418024 d27383b0a8fadef44c19c8c5a157ff8e ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1795304670 2265671 bb4cb5a3660a026ad7e4e0b20268dcfd ""
+  "auxiliary/IEEEtran.cls" 1795298282.33279 288304 b67b6fc6c2abb39f9b461923f5199343 ""
+  "auxiliary/project-report.aux" 1795529701.55509 4597 9208d94bbb509b291fe48a8104b48289 "pdflatex"
+  "auxiliary/project-report.bbl" 1795529701.25209 1033 c1076886b3a5b5d095bf31a67fa860cc "bibtex auxiliary/project-report"
+  "images/lennard-jones-potential.png" 1795298282.33482 86852 03820d6066a84abc87976ae2b858e458 ""
+  "images/speedup_N1600.png" 1795526060.49499 79579 963fec9b5b50ef57baa0aaf446206f5d ""
+  "images/speedup_c_N1600.png" 1795528943.24532 77363 8d1c9fce0e7524e3328025683e5fd70e ""
+  "project-report.tex" 1795529686.57731 17913 2a7e83d548e673359ba6c2df1dcd5ede ""
   (generated)
   "auxiliary/project-report.aux"
   "auxiliary/project-report.log"

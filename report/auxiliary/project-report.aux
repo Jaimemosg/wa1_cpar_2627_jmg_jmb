@@ -16,28 +16,34 @@
 \newlabel{eq:amdahl}{{4}{1}{}{equation.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Vectorization analysis.}{1}{}\protected@file@percent }
 \newlabel{sec:vec-method}{{\mbox  {II-B}}{1}{}{subsection.2.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Vectorization}{2}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Alternative A on one A64FX core ($N=800$, mean of 5 runs). SVE ops: static counts of selected SVE arithmetic instructions in \texttt  {Potential()} (P) and \texttt  {computeAccelerations()} (cA).}}{2}{}\protected@file@percent }
+\newlabel{tab:vec}{{I}{2}{}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Alternative C on one A64FX core ($N=800$, mean of 5 runs).}}{2}{}\protected@file@percent }
+\newlabel{tab:vec-c}{{II}{2}{}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Scalability}{2}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Speedup of Alternative A against the number of threads on one A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal speedup $S=p$.}}{2}{}\protected@file@percent }
+\newlabel{fig:speedup}{{2}{2}{}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Speedup of Alternative C against the number of threads on one A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal speedup $S=p$.}}{2}{}\protected@file@percent }
+\newlabel{fig:speedup-c}{{3}{2}{}{figure.3}{}}
 \bibstyle{ieeetr}
 \bibdata{references}
 \bibcite{foleylab-md}{1}
 \bibcite{jones1924}{2}
 \bibcite{lj-figure}{3}
 \bibcite{amdahl1967}{4}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Vectorization}{2}{}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Alternative A on one A64FX core ($N=800$, mean of 5 runs). SVE ops: static counts of selected SVE arithmetic instructions in \texttt  {Potential()} (P) and \texttt  {computeAccelerations()} (cA).}}{2}{}\protected@file@percent }
-\newlabel{tab:vec}{{I}{2}{}{table.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Scalability}{2}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Speedup of Alternative A against the number of threads on one A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal speedup $S=p$.}}{2}{}\protected@file@percent }
-\newlabel{fig:speedup}{{2}{2}{}{figure.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces CPU time and wall time of Alternative A on one A64FX node ($N=1600$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{2}{}\protected@file@percent }
-\newlabel{tab:cpu-time}{{II}{2}{}{table.2}{}}
-\@writefile{toc}{\contentsline {section}{References}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Profiling methodology}{2}{}\protected@file@percent }
-\newlabel{app:method}{{A}{2}{}{section.Appendix.A}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces CPU time and wall time of Alternative A on one A64FX node ($N=1600$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{3}{}\protected@file@percent }
+\newlabel{tab:cpu-time}{{III}{3}{}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces CPU time and wall time of Alternative C on one A64FX node ($N=1600$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{3}{}\protected@file@percent }
+\newlabel{tab:cpu-time-c}{{IV}{3}{}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{References}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  A: Profiling methodology}{3}{}\protected@file@percent }
+\newlabel{app:method}{{A}{3}{}{section.Appendix.A}{}}
 \@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  B: Vectorization methodology and assembly analysis}{3}{}\protected@file@percent }
 \newlabel{app:asm}{{B}{3}{}{section.Appendix.B}{}}
 \@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  C: Scalability methodology}{3}{}\protected@file@percent }
 \newlabel{app:scaling}{{C}{3}{}{section.Appendix.C}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Inner loop over $j$ of \texttt  {Potential()} (Alternative A), non-vectorized (left) and vectorized with SVE (right).}}{4}{}\protected@file@percent }
-\newlabel{fig:asm}{{3}{4}{}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Inner loop over $j$ of \texttt  {Potential()} (Alternative A), non-vectorized (left) and vectorized with SVE (right).}}{4}{}\protected@file@percent }
+\newlabel{fig:asm}{{4}{4}{}{figure.4}{}}
 \gdef \@abspage@last{4}
