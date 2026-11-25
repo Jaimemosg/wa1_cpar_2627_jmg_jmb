@@ -47,42 +47,78 @@ def read_times(results, particles):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--particles", type=int, default=1600)
+    parser.add_argument("--particles", type=int, nargs="+", default=[1600],
+                        help="One or more particle counts N to plot (e.g. --particles 1600 5000)")
     parser.add_argument("--results", type=Path, default=Path("results/deucalion/md_a_scaling"))
     parser.add_argument("--label", type=str, default=None,
                         help="Version label for the plot title (default: inferred from --results)")
     parser.add_argument("--output", type=Path, default=None,
-                        help="PNG file (default: report/images/speedup[_<ver>]_N<particles>.png)")
+                        help="PNG file (default: report/images/speedup[_<ver>]_N<N>[_N<N>...].png)")
     args = parser.parse_args()
     inferred_label, suffix = infer_version(args.results)
     label = args.label or inferred_label
-    output = args.output or Path(f"report/images/speedup{suffix}_N{args.particles}.png")
+    ns = args.particles
+    n_tag = "_".join(f"N{n}" for n in ns)
+    output = args.output or Path(f"report/images/speedup{suffix}_{n_tag}.png")
 
-    times = read_times(args.results, args.particles)
-    if 1 not in times:
-        raise SystemExit(f"No 1-thread result for N={args.particles} in {args.results}")
+    series = []
+    all_threads = set()
+    for n in ns:
+        times = read_times(args.results, n)
+        if 1 not in times:
+            raise SystemExit(f"No 1-thread result for N={n} in {args.results}")
+        threads = list(times)
+        t1 = times[1][0]
+        speedup = [t1 / times[p][0] for p in threads]
+        series.append((n, threads, times, speedup))
+        all_threads.update(threads)
 
-    threads = list(times)
-    t1 = times[1][0]
-    speedup = [t1 / times[p][0] for p in threads]
+        print(f"=== {label}, N = {n} ===")
+        print(f"{'threads':>7} {'seconds':>10} {'speedup':>8} {'efficiency':>10}")
+        for p, s in zip(threads, speedup):
+            print(f"{p:>7} {times[p][0]:>10.4f} {s:>8.2f} {s / p:>10.0%}")
 
-    print(f"{'threads':>7} {'seconds':>10} {'speedup':>8} {'efficiency':>10}")
-    for p, s in zip(threads, speedup):
-        print(f"{p:>7} {times[p][0]:>10.4f} {s:>8.2f} {s / p:>10.0%}")
+    all_threads = sorted(all_threads)
+    max_p = max(all_threads)
+    colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
+    markers = ["o-", "s-", "^-", "D-"]
 
-    max_p = max(threads)
     fig, ax = plt.subplots(figsize=(6, 4.5))
     ax.plot([0, max_p], [0, max_p], "--", color="gray", label="Ideal $S = p$")
-    ax.plot(threads, speedup, "o-", color="tab:blue", label="Measured $S = T_1 / T_p$")
-    for p, s in zip(threads, speedup):
-        if p >= 8:                                    # small p points are too crowded to label
-            ax.annotate(f"{s:.1f}", (p, s), textcoords="offset points", xytext=(0, -14),
-                        ha="center", fontsize=8)
+
+    multi = len(series) > 1
+    for idx, (n, threads, times, speedup) in enumerate(series):
+        color = colors[idx % len(colors)]
+        marker = markers[idx % len(markers)]
+        curve_label = f"Measured, $N = {n}$" if multi else "Measured $S = T_1 / T_p$"
+        ax.plot(threads, speedup, marker, color=color, label=curve_label)
+
+        for p, s in zip(threads, speedup):
+            if not multi:
+                if p >= 8:                            # small p points are too crowded to label
+                    ax.annotate(f"{s:.1f}", (p, s), textcoords="offset points", xytext=(0, -14),
+                                ha="center", fontsize=8)
+            else:
+                if p >= 16:
+                    # Place lower curve labels below and higher curve labels above-left
+                    if idx == 0:
+                        xytext, va = (0, -13), "top"
+                    else:
+                        xytext = (0, 8) if p == max_p else (-6, 7)
+                        va = "bottom"
+                    ax.annotate(
+                        f"{s:.1f}", (p, s), textcoords="offset points", xytext=xytext,
+                        ha="center", va=va, fontsize=8, color=color,
+                        bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="none", alpha=0.7),
+                    )
 
     ax.set_xlabel("Threads")
     ax.set_ylabel("Speedup")
-    ax.set_title(f"{label} speedup, N = {args.particles} (A64FX)")
-    ax.set_xticks(threads)
+    if multi:
+        ax.set_title(f"{label} speedup (A64FX)")
+    else:
+        ax.set_title(f"{label} speedup, N = {ns[0]} (A64FX)")
+    ax.set_xticks(all_threads)
     ax.set_xlim(0, max_p + 2)
     ax.set_ylim(0, max_p + 2)
     ax.grid(alpha=0.3)
