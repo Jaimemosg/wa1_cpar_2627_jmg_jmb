@@ -1,0 +1,13 @@
+# started on Mon Nov 23 11:29:25 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_b/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (4 runs):
+
+         83,241.99 msec task-clock                #   11.933 CPUs utilized            ( +-  0.03% )
+   166,482,688,537      cycles                    #    2.000 GHz                      ( +-  0.03% )
+    77,041,301,267      instructions              #    0.46  insn per cycle           ( +-  0.15% )
+
+           6.97554 +- 0.00257 seconds time elapsed  ( +-  0.04% )
+

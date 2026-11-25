@@ -1,0 +1,364 @@
+=== N=200  threads=1 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=200 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t1/metric_N200.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t1/
+# started on Mon Nov 23 20:40:54 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+            169.86 msec task-clock                #    0.845 CPUs utilized            ( +-  0.06% )
+       339,334,447      cycles                    #    1.998 GHz                      ( +-  0.06% )
+       161,596,198      instructions              #    0.48  insn per cycle           ( +-  0.03% )
+
+          0.201050 +- 0.000688 seconds time elapsed  ( +-  0.34% )
+
+=== N=400  threads=1 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=400 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t1/metric_N400.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t1/
+# started on Mon Nov 23 20:40:58 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+            610.38 msec task-clock                #    0.950 CPUs utilized            ( +-  0.00% )
+     1,220,373,111      cycles                    #    1.999 GHz                      ( +-  0.00% )
+       590,539,440      instructions              #    0.48  insn per cycle           ( +-  0.00% )
+
+           0.64243 +- 0.00111 seconds time elapsed  ( +-  0.17% )
+
+=== N=800  threads=1 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=800 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t1/metric_N800.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t1/
+# started on Mon Nov 23 20:41:04 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          2,358.54 msec task-clock                #    0.986 CPUs utilized            ( +-  0.00% )
+     4,716,680,123      cycles                    #    2.000 GHz                      ( +-  0.00% )
+     2,299,922,741      instructions              #    0.49  insn per cycle           ( +-  0.00% )
+
+           2.39177 +- 0.00271 seconds time elapsed  ( +-  0.11% )
+
+=== N=1600  threads=1 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t1/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t1/
+# started on Mon Nov 23 20:41:19 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          9,359.16 msec task-clock                #    0.997 CPUs utilized            ( +-  0.00% )
+    18,717,893,661      cycles                    #    2.000 GHz                      ( +-  0.00% )
+     9,125,614,494      instructions              #    0.49  insn per cycle           ( +-  0.00% )
+
+           9.38820 +- 0.00158 seconds time elapsed  ( +-  0.02% )
+
+=== N=1600  threads=2 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t2/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t2/
+# started on Mon Nov 23 20:42:09 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          9,389.92 msec task-clock                #    1.985 CPUs utilized            ( +-  0.00% )
+    18,779,372,023      cycles                    #    2.000 GHz                      ( +-  0.00% )
+     9,243,435,065      instructions              #    0.49  insn per cycle           ( +-  0.01% )
+
+          4.729653 +- 0.000358 seconds time elapsed  ( +-  0.01% )
+
+=== N=1600  threads=4 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t4/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t4/
+# started on Mon Nov 23 20:42:35 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          9,427.52 msec task-clock                #    3.935 CPUs utilized            ( +-  0.00% )
+    18,854,510,722      cycles                    #    2.000 GHz                      ( +-  0.00% )
+     9,473,083,242      instructions              #    0.50  insn per cycle           ( +-  0.01% )
+
+          2.395778 +- 0.000485 seconds time elapsed  ( +-  0.02% )
+
+=== N=1600  threads=8 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t8/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t8/
+# started on Mon Nov 23 20:42:50 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          9,513.60 msec task-clock                #    7.737 CPUs utilized            ( +-  0.02% )
+    19,026,506,067      cycles                    #    2.000 GHz                      ( +-  0.02% )
+     9,870,235,709      instructions              #    0.52  insn per cycle           ( +-  0.10% )
+
+          1.229685 +- 0.000536 seconds time elapsed  ( +-  0.04% )
+
+=== N=1600  threads=12 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t12/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t12/
+# started on Mon Nov 23 20:42:59 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          9,607.52 msec task-clock                #   11.414 CPUs utilized            ( +-  0.02% )
+    19,214,212,890      cycles                    #    2.000 GHz                      ( +-  0.02% )
+    10,290,339,975      instructions              #    0.54  insn per cycle           ( +-  0.06% )
+
+          0.841743 +- 0.000339 seconds time elapsed  ( +-  0.04% )
+
+=== N=1600  threads=24 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t24/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t24/
+# started on Mon Nov 23 20:43:06 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+         10,064.59 msec task-clock                #   21.633 CPUs utilized            ( +-  0.07% )
+    20,127,592,024      cycles                    #    2.000 GHz                      ( +-  0.07% )
+    12,319,009,580      instructions              #    0.61  insn per cycle           ( +-  0.29% )
+
+          0.465253 +- 0.000698 seconds time elapsed  ( +-  0.15% )
+
+=== N=1600  threads=48 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=1600 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t48/metric_N1600.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t48/
+# started on Mon Nov 23 20:43:11 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+         12,660.49 msec task-clock                #   36.883 CPUs utilized            ( +-  1.83% )
+    25,314,464,960      cycles                    #    1.999 GHz                      ( +-  1.82% )
+    22,745,281,788      instructions              #    0.90  insn per cycle           ( +-  5.02% )
+
+            0.3433 +- 0.0141 seconds time elapsed  ( +-  4.11% )
+
+=== N=200  threads=48 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=200 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t48/metric_N200.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t48/
+# started on Mon Nov 23 20:43:15 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          7,862.06 msec task-clock                #   27.199 CPUs utilized            ( +- 25.55% )
+    15,679,111,542      cycles                    #    1.994 GHz                      ( +- 25.51% )
+    35,367,594,964      instructions              #    2.26  insn per cycle           ( +- 30.65% )
+
+            0.2891 +- 0.0601 seconds time elapsed  ( +- 20.79% )
+
+=== N=400  threads=48 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=400 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t48/metric_N400.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t48/
+# started on Mon Nov 23 20:43:20 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          9,353.28 msec task-clock                #   27.598 CPUs utilized            ( +- 25.31% )
+    18,651,233,054      cycles                    #    1.994 GHz                      ( +- 25.27% )
+    41,834,113,263      instructions              #    2.24  insn per cycle           ( +- 30.39% )
+
+            0.3389 +- 0.0762 seconds time elapsed  ( +- 22.49% )
+
+=== N=800  threads=48 ===
+gcc -march=native \
+	-O3 -ffast-math -g -fno-omit-frame-pointer -Wno-unused-result -fopenmp \
+	-D NUMBER_OF_PARTICLES=800 \
+	src/md_a/MD.cpp -lm \
+	-o ./src/md_a/md_profiling
+perf stat \
+	--repeat 5 \
+	--event task-clock,cycles,instructions \
+	--output results/md_a_scaling/t48/metric_N800.txt \
+	sh -c './src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null'
+mv --force cp_average.txt cp_output.txt cp_traj.xyz results/md_a_scaling/t48/
+# started on Mon Nov 23 20:43:24 2026
+
+
+ Performance counter stats for 'sh -c ./src/md_a/md_profiling \
+			< ./inputdata.txt \
+			> /dev/null' (5 runs):
+
+          6,164.69 msec task-clock                #   28.347 CPUs utilized            ( +-  3.07% )
+    12,317,894,051      cycles                    #    1.998 GHz                      ( +-  3.07% )
+    17,411,445,248      instructions              #    1.41  insn per cycle           ( +-  6.06% )
+
+            0.2175 +- 0.0114 seconds time elapsed  ( +-  5.22% )
+
+results/md_a_scaling/t12/metric_N1600.txt:          0.841743 +- 0.000339 seconds time elapsed  ( +-  0.04% )
+results/md_a_scaling/t1/metric_N1600.txt:           9.38820 +- 0.00158 seconds time elapsed  ( +-  0.02% )
+results/md_a_scaling/t1/metric_N200.txt:          0.201050 +- 0.000688 seconds time elapsed  ( +-  0.34% )
+results/md_a_scaling/t1/metric_N400.txt:           0.64243 +- 0.00111 seconds time elapsed  ( +-  0.17% )
+results/md_a_scaling/t1/metric_N800.txt:           2.39177 +- 0.00271 seconds time elapsed  ( +-  0.11% )
+results/md_a_scaling/t24/metric_N1600.txt:          0.465253 +- 0.000698 seconds time elapsed  ( +-  0.15% )
+results/md_a_scaling/t2/metric_N1600.txt:          4.729653 +- 0.000358 seconds time elapsed  ( +-  0.01% )
+results/md_a_scaling/t48/metric_N1600.txt:            0.3433 +- 0.0141 seconds time elapsed  ( +-  4.11% )
+results/md_a_scaling/t48/metric_N200.txt:            0.2891 +- 0.0601 seconds time elapsed  ( +- 20.79% )
+results/md_a_scaling/t48/metric_N400.txt:            0.3389 +- 0.0762 seconds time elapsed  ( +- 22.49% )
+results/md_a_scaling/t48/metric_N800.txt:            0.2175 +- 0.0114 seconds time elapsed  ( +-  5.22% )
+results/md_a_scaling/t4/metric_N1600.txt:          2.395778 +- 0.000485 seconds time elapsed  ( +-  0.02% )
+results/md_a_scaling/t8/metric_N1600.txt:          1.229685 +- 0.000536 seconds time elapsed  ( +-  0.04% )

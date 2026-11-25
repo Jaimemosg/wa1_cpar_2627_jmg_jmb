@@ -1,0 +1,13 @@
+# started on Wed Nov 25 07:59:08 2026
+
+
+ Performance counter stats for 'sh -c cd results/md_b_serial_novec && ./md_profiling \
+			< /projects/F202500010HPCVLABUMINHO/2026-2027cp/pg63520/pg63520_pg63503/inputdata.txt \
+			> /dev/null' (5 runs):
+
+          3,127.17 msec task-clock                #    0.997 CPUs utilized            ( +-  0.00% )
+     6,254,064,487      cycles                    #    2.000 GHz                      ( +-  0.00% )
+     3,193,669,873      instructions              #    0.51  insn per cycle           ( +-  0.00% )
+
+          3.137976 +- 0.000498 seconds time elapsed  ( +-  0.02% )
+

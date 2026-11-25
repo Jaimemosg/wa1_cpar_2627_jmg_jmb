@@ -1,0 +1,13 @@
+# started on Tue Nov 24 22:29:24 2026
+
+
+ Performance counter stats for 'sh -c cd results/md_c_scaling/t1 && ./md_profiling \
+			< /projects/F202500010HPCVLABUMINHO/2026-2027cp/pg63520/pg63520_pg63503/inputdata.txt \
+			> /dev/null' (5 runs):
+
+            149.79 msec task-clock                #    0.864 CPUs utilized            ( +-  0.27% )
+       299,293,738      cycles                    #    1.998 GHz                      ( +-  0.26% )
+        72,378,619      instructions              #    0.24  insn per cycle           ( +-  0.30% )
+
+            0.1733 +- 0.0147 seconds time elapsed  ( +-  8.48% )
+
