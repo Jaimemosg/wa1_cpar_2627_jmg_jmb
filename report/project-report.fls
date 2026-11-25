@@ -86,6 +86,10 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics-def/luatex.def
+INPUT /usr/share/texlive/texmf-dist/tex/latex/subfig/subfig.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/caption/caption3.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/dblfloatfix/dblfloatfix.sty
+INPUT /usr/share/texlive/texmf-dist/tex/latex/base/fixltx2e.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/textcomp.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/xcolor/xcolor.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg
@@ -209,11 +213,11 @@ OUTPUT project-report.pdf
 INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx8.tfm
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx6.tfm
-INPUT ./images/speedup_N1600.png
-INPUT ./images/speedup_N1600.png
-INPUT ./images/speedup_c_N1600.png
-INPUT ./images/speedup_c_N1600.png
 INPUT ./auxiliary/project-report.bbl
+INPUT ./images/speedup_N5000.png
+INPUT ./images/speedup_N5000.png
+INPUT ./images/speedup_c_N5000.png
+INPUT ./images/speedup_c_N5000.png
 INPUT ./project-report.aux
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb

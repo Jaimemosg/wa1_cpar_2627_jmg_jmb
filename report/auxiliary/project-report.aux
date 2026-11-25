@@ -37,18 +37,22 @@
 \newlabel{app:scaling}{{C}{3}{}{section.Appendix.C}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Inner loop over $j$ of \texttt  {Potential()} (Alternative A), non-vectorized (left) and vectorized with SVE (right).}}{4}{}\protected@file@percent }
 \newlabel{fig:asm}{{2}{4}{}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Inner loop of \texttt  {Potential()} (Alternative~C), non-vectorized (left; six identical unrolled scalar pairs omitted for brevity) and vectorized with SVE (right).}}{4}{}\protected@file@percent }
+\newlabel{fig:asm-b-potential}{{3}{4}{}{figure.3}{}}
 \@writefile{toc}{\contentsline {section}{Appendix\nobreakspace  D: Scalability results}{4}{}\protected@file@percent }
 \newlabel{app:scaling-results}{{D}{4}{}{section.Appendix.D}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces CPU time and wall time of Alternative A on one A64FX node ($N=5000$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{4}{}\protected@file@percent }
-\newlabel{tab:cpu-time}{{II}{4}{}{table.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces CPU time and wall time of Alternative C on one A64FX node ($N=5000$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{4}{}\protected@file@percent }
-\newlabel{tab:cpu-time-c}{{III}{4}{}{table.3}{}}
-\newlabel{fig:speedup-a}{{3a}{4}{}{subfigure.3.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Inner loop over $j$ of \texttt  {computeAccelerations()} (Alternative~C), non-vectorized (left) and vectorized with SVE (right).}}{5}{}\protected@file@percent }
+\newlabel{fig:asm-b-accel}{{4}{5}{}{figure.4}{}}
+\newlabel{fig:speedup-a}{{5a}{5}{}{subfigure.5.1}{}}
 \newlabel{sub@fig:speedup-a}{{(a)}{a}}
-\newlabel{fig:speedup-c}{{3b}{4}{}{subfigure.3.2}{}}
+\newlabel{fig:speedup-c}{{5b}{5}{}{subfigure.5.2}{}}
 \newlabel{sub@fig:speedup-c}{{(b)}{b}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Speedup against the number of threads on one A64FX node ($N=5000$, mean of 5 runs). The dashed line is the ideal speedup $S=p$.}}{4}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Alternative A}}}{4}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Alternative C}}}{4}{}\protected@file@percent }
-\newlabel{fig:speedup}{{3}{4}{}{figure.3}{}}
-\gdef \@abspage@last{4}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Speedup against the number of threads on one A64FX node ($N=5000$, mean of 5 runs). The dashed line is the ideal speedup $S=p$.}}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {Alternative A}}}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {Alternative C}}}{5}{}\protected@file@percent }
+\newlabel{fig:speedup}{{5}{5}{}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces CPU time and wall time of Alternative A on one A64FX node ($N=5000$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{6}{}\protected@file@percent }
+\newlabel{tab:cpu-time}{{II}{6}{}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces CPU time and wall time of Alternative C on one A64FX node ($N=5000$, mean of 5 runs). Instructions and cycles are summed over all threads; CPI is their ratio (cycles/instructions); $T_\text  {CPU}=\text  {Instr.}\times \text  {CPI}\times 0.5$\,ns.}}{6}{}\protected@file@percent }
+\newlabel{tab:cpu-time-c}{{III}{6}{}{table.3}{}}
+\gdef \@abspage@last{6}

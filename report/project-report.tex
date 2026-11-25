@@ -299,6 +299,11 @@ Fig.~\ref{fig:asm} compares the \texttt{Potential()} inner loops
 extracted with \texttt{objdump}. The scalar loop processes one pair
 per iteration; the SVE loop processes up to eight. Predication handles
 the final partial group, and \texttt{faddv} combines the partial sums.
+For Alternative~C, Figs.~\ref{fig:asm-b-potential} and~\ref{fig:asm-b-accel}
+compare the inner loops of \texttt{Potential()} and
+\texttt{computeAccelerations()}, confirming that both kernels operate on
+512-bit SVE registers (\texttt{z0.d}--\texttt{z31.d}) over the 8-particle
+SoA strips.
 
 \begin{figure*}[!t]
 \centering
@@ -354,6 +359,157 @@ non-vectorized (left) and vectorized with SVE (right).}
 \label{fig:asm}
 \end{figure*}
 
+\begin{figure*}[!t]
+\centering
+\begin{minipage}[t]{0.42\textwidth}
+\footnotesize
+\textbf{novec} (scalar)
+\begin{verbatim}
+mov    w4, w5
+add    w5, w5, #0x1
+cmp    w3, w5
+b.le   401948 <Potential()+0x388>
+ldp    d26, d24, [x17]
+ldp    d27, d25, [x2]
+fsub   d24, d26, d24
+fsub   d25, d27, d25
+fmul   d24, d24, d24
+fmadd  d25, d25, d25, d24
+ldp    d28, d29, [x0]
+fsub   d29, d28, d29
+fmadd  d29, d29, d29, d25
+fdiv   d29, d13, d29
+fmul   d25, d29, d29
+ldr    d30, [x6]
+fmul   d29, d25, d29
+add    w7, w4, #0x2
+fsub   d25, d29, d15
+fmadd  d30, d25, d29, d30
+...    // 6 more unrolled scalar pairs (#16..#56)
+str    d30, [x6]
+add    x6, x6, #0x8
+add    x2, x2, #0x8
+add    x17, x17, #0x8
+add    x0, x0, #0x8
+cmp    w5, w9
+b.ne   <loop>
+\end{verbatim}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.52\textwidth}
+\footnotesize
+\textbf{vec} (SVE, up to 8 pairs per iteration)
+\begin{verbatim}
+ld1d    {z31.d}, p6/z, [x4, x14, lsl #3]
+ld1d    {z29.d}, p6/z, [x3, x14, lsl #3]
+fsub    z31.d, z25.d, z31.d
+fsub    z29.d, z26.d, z29.d
+fmul    z28.d, z31.d, z31.d
+fmad    z29.d, p7/m, z29.d, z28.d
+ld1d    {z31.d}, p6/z, [x2, x14, lsl #3]
+fsub    z31.d, z27.d, z31.d
+fmad    z31.d, p7/m, z31.d, z29.d
+fdivr   z31.d, p7/m, z31.d, z18.d
+fmul    z29.d, z31.d, z31.d
+incd    x14
+fmul    z31.d, z29.d, z31.d
+movprfx z29, z31
+fsub    z29.d, p7/m, z29.d, #1.0
+fmla    z30.d, p6/m, z29.d, z31.d
+whilelo p6.d, w14, w15
+b.ne    <loop>
+faddv   d30, p7, z30.d    // after loop
+\end{verbatim}
+\end{minipage}
+\caption{Inner loop of \texttt{Potential()} (Alternative~C),
+non-vectorized (left; six identical unrolled scalar pairs omitted for
+brevity) and vectorized with SVE (right).}
+\label{fig:asm-b-potential}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\begin{minipage}[t]{0.42\textwidth}
+\footnotesize
+\textbf{novec} (scalar)
+\begin{verbatim}
+ldr    d4, [x9, #8]!
+ldr    d20, [x10, #8]!
+ldr    d21, [x8, #8]!
+ldr    d28, [x14, #8]!
+ldr    d29, [x16, #8]!
+ldr    d30, [x13, #8]!
+fsub   d28, d28, d26
+fsub   d29, d29, d27
+fsub   d30, d30, d25
+fmul   d31, d28, d28
+fmadd  d31, d29, d29, d31
+fmadd  d31, d30, d30, d31
+fdiv   d31, d22, d31
+fmul   d0, d31, d31
+fadd   d31, d31, d31
+fmadd  d31, d0, d31, d23
+fmul   d0, d0, d0
+fmul   d31, d31, d24
+fmul   d31, d31, d0
+fmadd  d4, d28, d31, d4
+fmadd  d20, d29, d31, d20
+fmadd  d21, d30, d31, d21
+str    d4, [x9]
+str    d21, [x8]
+str    d20, [x10]
+cmp    w12, #0x1
+b.ne   402d40 <computeAccelerations()+0x10c0>
+cmp    w4, #0x2
+b.ne   402db4 <computeAccelerations()+0x1134>
+add    w12, w12, #0x1
+cmp    w15, w12
+b.ne   <loop>
+\end{verbatim}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.52\textwidth}
+\footnotesize
+\textbf{vec} (SVE, up to 8 pairs per iteration)
+\begin{verbatim}
+ld1d    {z24.d}, p6/z, [x12, x3, lsl #3]
+ld1d    {z25.d}, p6/z, [x13, x3, lsl #3]
+ld1d    {z22.d}, p6/z, [x11, x3, lsl #3]
+ld1d    {z1.d}, p6/z, [x4]
+fsub    z24.d, z24.d, z27.d
+fsub    z25.d, z25.d, z28.d
+fsub    z22.d, z22.d, z26.d
+fmul    z23.d, z24.d, z24.d
+fmla    z23.d, p7/m, z25.d, z25.d
+fmla    z23.d, p7/m, z22.d, z22.d
+fdivr   z23.d, p7/m, z23.d, z31.d
+fmul    z21.d, z23.d, z23.d
+fadd    z23.d, z23.d, z23.d
+fmul    z2.d, z21.d, z21.d
+fmad    z23.d, p7/m, z21.d, z30.d
+fmul    z23.d, z23.d, z29.d
+fmul    z23.d, z23.d, z2.d
+fmla    z1.d, p7/m, z25.d, z23.d
+st1d    {z1.d}, p6, [x4]
+ld1d    {z0.d}, p6/z, [x5]
+fmla    z0.d, p7/m, z24.d, z23.d
+st1d    {z0.d}, p6, [x5]
+ld1d    {z20.d}, p6/z, [x6]
+fmla    z20.d, p7/m, z22.d, z23.d
+st1d    {z20.d}, p6, [x6]
+incd    x3
+incb    x4
+incb    x5
+incb    x6
+whilelo p6.d, w3, w7
+b.ne    <loop>
+\end{verbatim}
+\end{minipage}
+\caption{Inner loop over $j$ of \texttt{computeAccelerations()} (Alternative~C),
+non-vectorized (left) and vectorized with SVE (right).}
+\label{fig:asm-b-accel}
+\end{figure*}
+
 \section{Scalability methodology}
 \label{app:scaling}
 Alternatives A and C are tested with $N=5000$ on one 48-core A64FX node
@@ -403,12 +559,18 @@ Fig.~\ref{fig:speedup} and Tables~\ref{tab:cpu-time} and~\ref{tab:cpu-time-c}
 present the strong-scalability curves and aggregate performance counters
 for Alternatives~A and~C at $N=5000$.
 
-\begin{table}[!htbp]
+\makeatletter
+\setlength{\@fptop}{0pt}
+\setlength{\@dblfptop}{0pt}
+\makeatother
+\begin{table*}[!t]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
 \caption{CPU time and wall time of Alternative A on one A64FX node
 ($N=5000$, mean of 5 runs). Instructions and cycles are summed over all
 threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
 \label{tab:cpu-time}
-\centering
 \begin{tabular}{rrrrrr}
 \hline
 $p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
@@ -425,15 +587,14 @@ $p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (
 48 & 124.29 & 1.59 & 98.89 &  2.06 &  2.41 \\
 \hline
 \end{tabular}
-\end{table}
-
-\newpage
-\begin{table}[!htbp]
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
 \caption{CPU time and wall time of Alternative C on one A64FX node
 ($N=5000$, mean of 5 runs). Instructions and cycles are summed over all
 threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
 \label{tab:cpu-time-c}
-\centering
 \begin{tabular}{rrrrrr}
 \hline
 $p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
@@ -450,6 +611,7 @@ $p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (
 48 & 64.34 & 2.53 & 81.55 &  1.70 &  1.86 \\
 \hline
 \end{tabular}
-\end{table}
+\end{minipage}
+\end{table*}
 
 \end{document}
