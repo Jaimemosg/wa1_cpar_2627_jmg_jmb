@@ -197,12 +197,13 @@ Both builds reproduce the same thermodynamic averages as Alternative A.
 \caption{Alternative C on one A64FX core ($N=800$, mean of 5 runs).}
 \label{tab:vec-c}
 \centering
-\begin{tabular}{lccc}
+\begin{tabular}{lccccc}
 \hline
-Build & Time (s) & Cycles ($10^9$) & Instr. ($10^9$) \\
+Build & Time (s) & Cycles ($10^9$) & Instr. ($10^9$) & \multicolumn{2}{c}{SVE ops} \\
+      &          &                 &                 & P & cA \\
 \hline
-novec & 4.245 & 8.47 & 3.61 \\
-vec   & 1.934 & 3.84 & 0.72 \\
+novec & 4.245 & 8.47 & 3.61 & 0 & 0 \\
+vec   & 1.934 & 3.84 & 0.72 & 288 & 100 \\
 \hline
 \end{tabular}
 \end{table}
@@ -237,10 +238,12 @@ Although Alternative C's relative self-speedup is slightly lower than
 Alternative A's at 48 threads ($25.7\times$ vs.\ $27.3\times$), it is
 consistently faster in absolute wall-clock time at every thread count,
 improving from $7.63$\,s at 1 thread to $0.30$\,s at 48 threads
-(compared to $9.39$\,s and $0.34$\,s for Alternative A). Because the
-vectorized interaction kernels finish sooner on one core, fixed
-non-parallelized work and thread-coordination costs represent a larger
-relative share of total runtime at high thread counts.
+(compared to $9.39$\,s and $0.34$\,s for Alternative A). This slightly 
+lower self-speedup is consistent with Amdahl's law, as a faster 
+parallel region increases the relative share of any remaining
+serial work, and with coarser loop granularity at $p=48$, where
+$1600/8=200$ strips divide unevenly across threads (8 threads process
+5 strips and 40 process 4).
 
 \begin{figure}[htbp]
 \centering
