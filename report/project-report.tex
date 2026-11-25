@@ -12,6 +12,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
+\usepackage[caption=false,font=footnotesize]{subfig}
 \graphicspath{{images/}{auxiliary/}}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -142,6 +143,18 @@ to establish which interaction loops use vector instructions.
 Implementation, compilation, and measurement details are provided in
 Appendix~\ref{app:asm}.
 
+% Placed here so the two-column figure floats to the top of page 2 (Scalability).
+\begin{figure*}[!t]
+\centering
+\subfloat[Alternative A]{\includegraphics[width=0.44\textwidth]{speedup_N1600.png}\label{fig:speedup-a}}
+\hfil
+\subfloat[Alternative C]{\includegraphics[width=0.44\textwidth]{speedup_c_N1600.png}\label{fig:speedup-c}}
+\caption{Speedup against the number of threads on one A64FX node
+($N=1600$, mean of 5 runs). The dashed line is the ideal speedup
+$S=p$.}
+\label{fig:speedup}
+\end{figure*}
+
 \section{Results}
 Profiling the baseline identifies \texttt{Potential()} and
 \texttt{computeAccelerations()} as the main computational bottlenecks,
@@ -150,9 +163,9 @@ time, respectively, and approximately 97\% together.
 This makes the interaction calculations the primary targets for optimisation.
 
 \subsection{Vectorization}
-Table~\ref{tab:vec} compares Alternative A with automatic vectorization
-enabled and disabled on an A64FX core. Vectorization reduces wall-clock
-time by approximately a quarter, while retiring fewer instructions and
+Table~\ref{tab:vec} compares Alternatives A and C with automatic vectorization
+enabled and disabled on an A64FX core. For Alternative A, vectorization reduces
+wall-clock time by approximately a quarter, while retiring fewer instructions and
 consuming fewer processor cycles. Both builds produce identical
 reported averages.
 
@@ -164,24 +177,7 @@ indicate that the measured improvement comes mainly from vectorizing
 the potential-energy calculation, while the acceleration calculation
 remains a target for further optimisation.
 
-\begin{table}[htbp]
-\caption{Alternative A on one A64FX core ($N=800$, mean of 5 runs).
-SVE ops: static counts of selected SVE arithmetic instructions in \texttt{Potential()} (P) and
-\texttt{computeAccelerations()} (cA).}
-\label{tab:vec}
-\centering
-\begin{tabular}{lccccc}
-\hline
-Build & Time (s) & Cycles ($10^9$) & Instr. ($10^9$) & \multicolumn{2}{c}{SVE ops} \\
-      &          &                 &                 & P & cA \\
-\hline
-novec & 3.152 & 6.25 & 3.19 & 0  & 0 \\
-vec   & 2.377 & 4.70 & 2.29 & 11 & 0 \\
-\hline
-\end{tabular}
-\end{table}
-
-Table~\ref{tab:vec-c} shows the same comparison for Alternative C, which
+Table~\ref{tab:vec} also shows the same comparison for Alternative C, which
 groups target particles into strips of 8 in local Structure-of-Arrays (SoA)
 buffers to match the 512-bit SVE register width and evaluates all $N(N-1)$
 ordered pairs in \texttt{computeAccelerations()} without cross-lane
@@ -194,22 +190,29 @@ vectorized Alternative A on a single core ($1.934$\,s vs.\ $2.377$\,s).
 Both builds reproduce the same thermodynamic averages as Alternative A.
 
 \begin{table}[htbp]
-\caption{Alternative C on one A64FX core ($N=800$, mean of 5 runs).}
-\label{tab:vec-c}
+\caption{Alternatives A and C on one A64FX core ($N=800$, mean of 5 runs).
+SVE ops: static counts of selected SVE arithmetic instructions in \texttt{Potential()} (P) and
+\texttt{computeAccelerations()} (cA).}
+\label{tab:vec}
 \centering
 \begin{tabular}{lccccc}
 \hline
 Build & Time (s) & Cycles ($10^9$) & Instr. ($10^9$) & \multicolumn{2}{c}{SVE ops} \\
       &          &                 &                 & P & cA \\
 \hline
-novec & 4.245 & 8.47 & 3.61 & 0 & 0 \\
+\multicolumn{6}{l}{\textit{Alternative A}} \\
+novec & 3.152 & 6.25 & 3.19 & 0   & 0   \\
+vec   & 2.377 & 4.70 & 2.29 & 11  & 0   \\
+\hline
+\multicolumn{6}{l}{\textit{Alternative C}} \\
+novec & 4.245 & 8.47 & 3.61 & 0   & 0   \\
 vec   & 1.934 & 3.84 & 0.72 & 288 & 100 \\
 \hline
 \end{tabular}
 \end{table}
 
 \subsection{Scalability}
-Fig.~\ref{fig:speedup} shows how Alternative A scales as the number
+Fig.~\ref{fig:speedup-a} shows how Alternative A scales as the number
 of threads increases on an A64FX node. Scaling is initially close to
 ideal, reaching 93\% parallel efficiency at 12 threads, but departs
 from this trend at higher thread counts. At 48 threads, execution is
@@ -217,15 +220,6 @@ about 27 times faster than with one thread, although efficiency falls
 to 57\%. Using more threads therefore continues to reduce execution
 time, with diminishing gains.
 Measurement details are provided in Appendix~\ref{app:scaling}.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.7\columnwidth]{speedup_N1600.png}
-\caption{Speedup of Alternative A against the number of threads on one
-A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal
-speedup $S=p$.}
-\label{fig:speedup}
-\end{figure}
 
 Fig.~\ref{fig:speedup-c} shows the corresponding strong scalability of
 Alternative C at $N=1600$. Alternative C exhibits a similar scaling
@@ -244,15 +238,6 @@ parallel region increases the relative share of any remaining
 serial work, and with coarser loop granularity at $p=48$, where
 $1600/8=200$ strips divide unevenly across threads (8 threads process
 5 strips and 40 process 4).
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.7\columnwidth]{speedup_c_N1600.png}
-\caption{Speedup of Alternative C against the number of threads on one
-A64FX node ($N=1600$, mean of 5 runs). The dashed line is the ideal
-speedup $S=p$.}
-\label{fig:speedup-c}
-\end{figure}
 
 The increasing CPU time and instruction count in
 Tables~\ref{tab:cpu-time} and~\ref{tab:cpu-time-c} indicate growing
