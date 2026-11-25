@@ -27,6 +27,7 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
+#include <omp.h>
 
 
 // Number of particles
@@ -460,8 +461,6 @@ double Kinetic() { //Write Function here!
     
 }
 
-
-// Function to calculate the potential energy of the system
 inline double ljPairPotential(double rSqd) {
     const double s2  = sigma * sigma / rSqd;
     const double s6  = s2 * s2 * s2;
@@ -469,13 +468,14 @@ inline double ljPairPotential(double rSqd) {
     return s12 - s6;
 }
 
+// Function to calculate the potential energy of the system
 double Potential() {
 
     double sum = 0.0;
 
     // Row i has N - 1 - i pairs (i < j); cyclic rows balance this triangle.
     // The reduction combines the per-thread partial sums.
-    #pragma omp parallel for reduction(+:sum) schedule(static, 1)
+    #pragma omp parallel for reduction(+:sum) schedule(static, 8)
     for (int i = 0; i < N - 1; ++i) {
         const double* ri = r[i];
 
@@ -494,56 +494,52 @@ double Potential() {
 }
 
 
+
 //   Uses the derivative of the Lennard-Jones potential to calculate
 //   the forces on each atom.  Then uses a = F/m to calculate the
-//   accelleration of each atom. 
-inline double ljForceFactor(double rSqd) {
-    const double inv2  = 1.0 / rSqd;
-    const double inv4  = inv2 * inv2;
-    const double inv8  = inv4 * inv4;
-    const double inv14 = inv8 * inv4 * inv2;
-    return 24.0 * (2.0 * inv14 - inv8);
-}
-
-inline void addNeighbourAccelerations(const double ri[3], int first, int last,
-                                      double ai[3]) {
-    double ax = 0.0, ay = 0.0, az = 0.0;
-
-    #pragma omp simd reduction(+:ax, ay, az)
-    for (int j = first; j < last; ++j) {
-        const double dx = ri[0] - r[j][0];
-        const double dy = ri[1] - r[j][1];
-        const double dz = ri[2] - r[j][2];
-
-        const double forceFactor = ljForceFactor(dx * dx + dy * dy + dz * dz);
-        ax += dx * forceFactor;
-        ay += dy * forceFactor;
-        az += dz * forceFactor;
-    }
-
-    ai[0] += ax;
-    ai[1] += ay;
-    ai[2] += az;
-}
-
+//   accelleration of each atom.
 void computeAccelerations() {
+    #pragma omp parallel
+    {
+        // 1. Zero-initialize all accelerations in parallel
+        #pragma omp for schedule(static)
+        for (int i = 0; i < N; i++) {
+            a[i][0] = 0.0;
+            a[i][1] = 0.0;
+            a[i][2] = 0.0;
+        }
+        // Implicit barrier here ensures 'a' is completely zeroed before force accumulation
 
-    // Every particle has N - 1 neighbours, so equal contiguous blocks balance the work.
-    #pragma omp parallel for schedule(static)
-    for (int i = 0; i < N; ++i) {
+        // 2. Compute pairwise forces across all distinct pairs (i < j)
+        #pragma omp for reduction(+:a[:N][:3]) schedule(static, 8)
+        for (int i = 0; i < N - 1; i++) {
+            const double* ri = r[i];
 
-        // Private accumulator: a_i = sum_{j != i} g_ij.
-        double ai[3] = {0.0, 0.0, 0.0};
+            for (int j = i + 1; j < N; j++) {
+                const double dx = ri[0] - r[j][0];
+                const double dy = ri[1] - r[j][1];
+                const double dz = ri[2] - r[j][2];
 
-        // All neighbours of i, split in two ranges only to skip j == i.
-        // Each pair is evaluated twice (once per owner): duplicated arithmetic
-        // instead of shared acceleration updates.
-        addNeighbourAccelerations(r[i], 0, i, ai);
-        addNeighbourAccelerations(r[i], i + 1, N, ai);
+                const double rSqd = dx * dx + dy * dy + dz * dz;
 
-        // Only the owner of particle i writes a_i.
-        for (int k = 0; k < 3; ++k)
-            a[i][k] = ai[k];
+                // Replace slow pow(rSqd, -7) and pow(rSqd, -4) with multiplications
+                const double inv_r2 = 1.0 / rSqd;
+                const double inv_r6 = inv_r2 * inv_r2 * inv_r2;
+                const double f      = 24.0 * inv_r2 * inv_r6 * (2.0 * inv_r6 - 1.0);
+
+                const double fx = dx * f;
+                const double fy = dy * f;
+                const double fz = dz * f;
+
+                a[i][0] += fx;
+                a[i][1] += fy;
+                a[i][2] += fz;
+
+                a[j][0] -= fx;
+                a[j][1] -= fy;
+                a[j][2] -= fz;
+            }
+        }
     }
 }
 
