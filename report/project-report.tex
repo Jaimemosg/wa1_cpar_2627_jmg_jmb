@@ -13,6 +13,7 @@
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage[caption=false,font=footnotesize]{subfig}
+\usepackage{dblfloatfix}
 \graphicspath{{images/}{auxiliary/}}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -143,18 +144,6 @@ to establish which interaction loops use vector instructions.
 Implementation, compilation, and measurement details are provided in
 Appendix~\ref{app:asm}.
 
-% Placed here so the two-column figure floats to the top of page 2 (Scalability).
-\begin{figure*}[!t]
-\centering
-\subfloat[Alternative A]{\includegraphics[width=0.44\textwidth]{speedup_N1600.png}\label{fig:speedup-a}}
-\hfil
-\subfloat[Alternative C]{\includegraphics[width=0.44\textwidth]{speedup_c_N1600.png}\label{fig:speedup-c}}
-\caption{Speedup against the number of threads on one A64FX node
-($N=1600$, mean of 5 runs). The dashed line is the ideal speedup
-$S=p$.}
-\label{fig:speedup}
-\end{figure*}
-
 \section{Results}
 Profiling the baseline identifies \texttt{Potential()} and
 \texttt{computeAccelerations()} as the main computational bottlenecks,
@@ -177,17 +166,12 @@ indicate that the measured improvement comes mainly from vectorizing
 the potential-energy calculation, while the acceleration calculation
 remains a target for further optimisation.
 
-Table~\ref{tab:vec} also shows the same comparison for Alternative C, which
-groups target particles into strips of 8 in local Structure-of-Arrays (SoA)
-buffers to match the 512-bit SVE register width and evaluates all $N(N-1)$
-ordered pairs in \texttt{computeAccelerations()} without cross-lane
-reductions. Without vectorization, this extra arithmetic makes
-Alternative C slower than Alternative A ($4.245$\,s vs.\ $3.152$\,s).
-With automatic vectorization enabled, however, wall-clock time drops by
-54\% (a $2.20\times$ speedup over \emph{novec}) and retired instructions
-fall by 80\% (from $3.61\times 10^9$ to $0.72\times 10^9$), outperforming
-vectorized Alternative A on a single core ($1.934$\,s vs.\ $2.377$\,s).
-Both builds reproduce the same thermodynamic averages as Alternative A.
+Alternative C uses 8-particle SoA strips and evaluates all ordered pairs in
+\texttt{computeAccelerations()} to enable full SVE vectorization
+(Appendix~\ref{app:asm}). Although slower without vectorization, enabling
+SVE cuts its runtime by 54\% ($2.20\times$) and retired instructions by
+80\%, outperforming vectorized Alternative A while preserving identical
+averages.
 
 \begin{table}[htbp]
 \caption{Alternatives A and C on one A64FX core ($N=800$, mean of 5 runs).
@@ -214,90 +198,52 @@ vec   & 1.934 & 3.84 & 0.72 & 288 & 100 \\
 \subsection{Scalability}
 Fig.~\ref{fig:speedup-a} shows how Alternative A scales as the number
 of threads increases on an A64FX node. Scaling is initially close to
-ideal, reaching 93\% parallel efficiency at 12 threads, but departs
+ideal, reaching 98\% parallel efficiency at 12 threads, but departs
 from this trend at higher thread counts. At 48 threads, execution is
-about 27 times faster than with one thread, although efficiency falls
-to 57\%. Using more threads therefore continues to reduce execution
+about 38 times faster than with one thread, although efficiency falls
+to 79\%. Using more threads therefore continues to reduce execution
 time, with diminishing gains.
 Measurement details are provided in Appendix~\ref{app:scaling}.
 
-Fig.~\ref{fig:speedup-c} shows the corresponding strong scalability of
-Alternative C at $N=1600$. Alternative C exhibits a similar scaling
-profile, achieving 95\% parallel efficiency at 8 threads and 91\% at
-12 threads ($10.9\times$ speedup), before tapering to $19.1\times$ at
-24 threads (79\% efficiency) and $25.7\times$ at 48 threads (54\%
-efficiency). The slight dip at 4 threads ($3.2\times$, 80\% efficiency)
-reflects higher run-to-run variance ($\pm 0.31$\,s across the five runs).
-Although Alternative C's relative self-speedup is slightly lower than
-Alternative A's at 48 threads ($25.7\times$ vs.\ $27.3\times$), it is
-consistently faster in absolute wall-clock time at every thread count,
-improving from $7.63$\,s at 1 thread to $0.30$\,s at 48 threads
-(compared to $9.39$\,s and $0.34$\,s for Alternative A). This slightly 
-lower self-speedup is consistent with Amdahl's law, as a faster 
-parallel region increases the relative share of any remaining
-serial work, and with coarser loop granularity at $p=48$, where
-$1600/8=200$ strips divide unevenly across threads (8 threads process
-5 strips and 40 process 4).
+Alternative C (Fig.~\ref{fig:speedup-c}) shows a similar trend,
+reaching 97\% efficiency at 12 threads and $39.5\times$ speedup (82\%
+efficiency) at 48 threads. In addition to achieving a slightly higher
+self-speedup than Alternative A at 48 threads, it is faster in
+wall-clock time at every thread count ($73.55$\,s to $1.86$\,s vs.\
+$91.28$\,s to $2.41$\,s). At $N=5000$, the larger workload amortises
+serial overhead and reduces strip imbalance across 48 threads.
 
-The increasing CPU time and instruction count in
+The rising CPU time and instruction counts in
 Tables~\ref{tab:cpu-time} and~\ref{tab:cpu-time-c} indicate growing
-parallel overhead in both alternatives. In Alternative C, the single-thread
-build retires less than a third as many instructions as Alternative A
-($2.72\times 10^9$ vs.\ $9.13\times 10^9$) at a higher CPI ($5.59$ vs.\
-$2.05$), consistent with wider SVE vector operations doing more work per
-retired instruction. As threads increase to 48, aggregate instructions
-rise sharply to $20.38\times 10^9$ while CPI drops to $1.10$ and total
-$T_\text{CPU}$ increases from $7.61$\,s to $11.20$\,s. With less work
-per thread, synchronization and thread management become relatively more
-costly. Thread sweeps with larger particle counts and measurements of
-synchronization costs and memory traffic could help establish whether
-coordination or memory limitations explain the efficiency decrease.
+parallel overhead in both alternatives. At one thread, Alternative C
+retires less than a third as many instructions as Alternative A at a
+higher CPI ($5.72$ vs.\ $2.06$) due to SVE vectorization, but aggregate
+instructions and $T_\text{CPU}$ increase sharply toward 48 threads.
+With less work per thread, synchronization and thread management become
+relatively more costly. Larger particle counts and measurements of
+synchronization and memory traffic could clarify whether coordination
+or memory bandwidth limits efficiency.
 
-\begin{table}[htbp]
-\caption{CPU time and wall time of Alternative A on one A64FX node
-($N=1600$, mean of 5 runs). Instructions and cycles are summed over all
-threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
-\label{tab:cpu-time}
-\centering
-\begin{tabular}{rrrrrr}
-\hline
-$p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
-\hline
-1  &  9.13 & 2.05 &  9.36 & 9.36 & 9.39 \\
-2  &  9.24 & 2.03 &  9.39 & 4.69 & 4.73 \\
-4  &  9.47 & 1.99 &  9.43 & 2.36 & 2.40 \\
-8  &  9.87 & 1.93 &  9.51 & 1.19 & 1.23 \\
-12 & 10.29 & 1.87 &  9.61 & 0.80 & 0.84 \\
-24 & 12.32 & 1.63 & 10.06 & 0.42 & 0.47 \\
-48 & 22.75 & 1.11 & 12.66 & 0.26 & 0.34 \\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table}[htbp]
-\caption{CPU time and wall time of Alternative C on one A64FX node
-($N=1600$, mean of 5 runs). Instructions and cycles are summed over all
-threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
-\label{tab:cpu-time-c}
-\centering
-\begin{tabular}{rrrrrr}
-\hline
-$p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
-\hline
-1  &  2.72 & 5.59 &  7.61 & 7.61 & 7.63 \\
-2  &  2.89 & 5.29 &  7.65 & 3.83 & 3.95 \\
-4  &  3.18 & 4.84 &  7.71 & 1.93 & 2.39 \\
-8  &  3.78 & 4.14 &  7.83 & 0.98 & 1.01 \\
-12 &  4.79 & 3.35 &  8.03 & 0.67 & 0.70 \\
-24 &  8.37 & 2.09 &  8.74 & 0.36 & 0.40 \\
-48 & 20.38 & 1.10 & 11.20 & 0.23 & 0.30 \\
-\hline
-\end{tabular}
-\end{table}
+\section{Conclusion}
+Profiling identified \texttt{Potential()} and \texttt{computeAccelerations()}
+as accounting for 97\% of baseline runtime, guiding both SIMD and OpenMP
+optimisations on the A64FX node. We select Alternative~C with 48~threads
+as the final implementation: by vectorizing both interaction kernels with
+512-bit SVE and eliminating the array reduction in
+\texttt{computeAccelerations()}, it achieves the lowest wall-clock time
+for $N=5000$ at $1.86$\,s ($39.5\times$ speedup, 82\% parallel
+efficiency), reducing runtime by 23\% compared with Alternative~A at
+48~threads ($2.41$\,s, 79\% efficiency). Alternative~A remains a viable
+engineering trade-off when code simplicity and maintainability outweigh
+peak performance, offering straightforward OpenMP directives and 94\%
+efficiency at 36~threads ($2.68$\,s) at the cost of leaving
+\texttt{computeAccelerations()} scalar and increasing execution time by
+30--44\% relative to Alternative~C at 48~threads.
 
 \bibliographystyle{ieeetr}
 \bibliography{references}
 
+\clearpage
 \appendices
 \section{Profiling methodology}
 \label{app:method}
@@ -410,8 +356,8 @@ non-vectorized (left) and vectorized with SVE (right).}
 
 \section{Scalability methodology}
 \label{app:scaling}
-Alternatives A and C are tested with $N=1600$ on one 48-core A64FX node
-of Deucalion, using 1, 2, 4, 8, 12, 24, and 48 threads.
+Alternatives A and C are tested with $N=5000$ on one 48-core A64FX node
+of Deucalion, using 1, 2, 4, 8, 12, 16, 24, 32, 36, and 48 threads.
 
 {\raggedright
 \begin{IEEEdescription}[\IEEEsetlabelwidth{Compile:}]
@@ -438,5 +384,72 @@ with $T_{\mathrm{clock}}=0.5$\,ns for the 2.0\,GHz clock.
 This is the aggregate CPU time across threads; $T_{\mathrm{CPU}}/p$
 provides a comparison with wall-clock time under full utilisation
 of all allocated cores.
+
+\begin{figure*}[!b]
+\centering
+\subfloat[Alternative A]{\includegraphics[width=0.42\textwidth]{speedup_N5000.png}\label{fig:speedup-a}}
+\hfil
+\subfloat[Alternative C]{\includegraphics[width=0.42\textwidth]{speedup_c_N5000.png}\label{fig:speedup-c}}
+\caption{Speedup against the number of threads on one A64FX node
+($N=5000$, mean of 5 runs). The dashed line is the ideal speedup
+$S=p$.}
+\label{fig:speedup}
+\end{figure*}
+
+\newpage
+\section{Scalability results}
+\label{app:scaling-results}
+Fig.~\ref{fig:speedup} and Tables~\ref{tab:cpu-time} and~\ref{tab:cpu-time-c}
+present the strong-scalability curves and aggregate performance counters
+for Alternatives~A and~C at $N=5000$.
+
+\begin{table}[!htbp]
+\caption{CPU time and wall time of Alternative A on one A64FX node
+($N=5000$, mean of 5 runs). Instructions and cycles are summed over all
+threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
+\label{tab:cpu-time}
+\centering
+\begin{tabular}{rrrrrr}
+\hline
+$p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
+\hline
+1  &  88.82 & 2.06 & 91.27 & 91.27 & 91.28 \\
+2  &  89.48 & 2.04 & 91.48 & 45.74 & 45.79 \\
+4  &  89.65 & 2.04 & 91.43 & 22.86 & 22.88 \\
+8  &  90.59 & 2.02 & 91.62 & 11.45 & 11.48 \\
+12 &  91.90 & 2.00 & 91.89 &  7.66 &  7.73 \\
+16 &  93.06 & 1.98 & 92.13 &  5.76 &  5.80 \\
+24 &  96.59 & 1.92 & 92.89 &  3.87 &  3.92 \\
+32 & 101.03 & 1.86 & 93.85 &  2.93 &  2.98 \\
+36 & 103.67 & 1.82 & 94.42 &  2.62 &  2.68 \\
+48 & 124.29 & 1.59 & 98.89 &  2.06 &  2.41 \\
+\hline
+\end{tabular}
+\end{table}
+
+\newpage
+\begin{table}[!htbp]
+\caption{CPU time and wall time of Alternative C on one A64FX node
+($N=5000$, mean of 5 runs). Instructions and cycles are summed over all
+threads; CPI is their ratio (cycles/instructions); $T_\text{CPU}=\text{Instr.}\times\text{CPI}\times 0.5$\,ns.}
+\label{tab:cpu-time-c}
+\centering
+\begin{tabular}{rrrrrr}
+\hline
+$p$ & Instr. ($10^9$) & CPI & $T_\text{CPU}$ (s) & $T_\text{CPU}/p$ (s) & Wall (s) \\
+\hline
+1  & 25.71 & 5.72 & 73.54 & 73.54 & 73.55 \\
+2  & 26.50 & 5.56 & 73.73 & 36.87 & 36.91 \\
+4  & 27.84 & 5.31 & 73.94 & 18.49 & 18.51 \\
+8  & 30.68 & 4.86 & 74.51 &  9.31 &  9.35 \\
+12 & 33.61 & 4.47 & 75.09 &  6.26 &  6.30 \\
+16 & 36.55 & 4.14 & 75.68 &  4.73 &  4.78 \\
+24 & 42.75 & 3.60 & 76.94 &  3.21 &  3.27 \\
+32 & 42.10 & 3.65 & 76.82 &  2.40 &  2.47 \\
+36 & 46.26 & 3.36 & 77.70 &  2.16 &  2.25 \\
+48 & 64.34 & 2.53 & 81.55 &  1.70 &  1.86 \\
+\hline
+\end{tabular}
+\end{table}
 
 \end{document}

@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex auxiliary/project-report"] 1795597027.81169 "auxiliary/project-report.aux" "auxiliary/project-report.bbl" "auxiliary/project-report" 1795597028.34902 0
+["bibtex auxiliary/project-report"] 1795601591.8227 "auxiliary/project-report.aux" "auxiliary/project-report.bbl" "auxiliary/project-report" 1795601592.35752 0
   "./references.bib" 1795560663.57712 3686 763558d7ed25d08afe56f3c535507daf ""
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/ieeetr.bst" 1292289607 18361 1a00e58565e7f19bf2b3e1bfb82254ae ""
-  "auxiliary/project-report.aux" 1795597028.23428 4517 0b432211ed04021e10760fa200caac23 "pdflatex"
+  "auxiliary/project-report.aux" 1795601592.2418 4797 0f7cfe7f384d18dd9dc5857e6733cd29 "pdflatex"
   (generated)
   "auxiliary/project-report.bbl"
   "auxiliary/project-report.blg"
   (rewritten before read)
-["pdflatex"] 1795597027.84912 "project-report.tex" "auxiliary/project-report.pdf" "project-report" 1795597028.34931 0
+["pdflatex"] 1795601591.85967 "project-report.tex" "auxiliary/project-report.pdf" "project-report" 1795601592.35777 0
   "/etc/texmf/web2c/texmf.cnf" 1794602967.76204 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -126,10 +126,12 @@
   "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty" 1761946296 88471 b1bb09142edddebd46ba986341b867bd ""
   "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amsopn.sty" 1748806692 4474 c510a88aa5f51b8c773b50a7ee92befd ""
   "/usr/share/texlive/texmf-dist/tex/latex/amsmath/amstext.sty" 1748806692 2444 9983e1d0683f102e3b190c64a49313aa ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/fixltx2e.sty" 1738182759 15509 100e57eba5cfd912b973149d706294ed ""
   "/usr/share/texlive/texmf-dist/tex/latex/base/ifthen.sty" 1748806692 5525 1593ca62a2554dd7423fc8a4e5a82125 ""
   "/usr/share/texlive/texmf-dist/tex/latex/base/textcomp.sty" 1738182759 2846 e26604d3d895e65d874c07f30c291f3f ""
   "/usr/share/texlive/texmf-dist/tex/latex/caption/caption3.sty" 1696191071 72619 ee90b6612147680fd73c3b1406a74245 ""
   "/usr/share/texlive/texmf-dist/tex/latex/cite/cite.sty" 1425427964 26218 19edeff8cdc2bcb704e8051dc55eb5a7 ""
+  "/usr/share/texlive/texmf-dist/tex/latex/dblfloatfix/dblfloatfix.sty" 1359502469 7429 c8f2321c9dcd3421eb76564b0d179fe3 ""
   "/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty" 1579991033 13886 d1306dcf79a944f6988e688c1785f9ce ""
   "/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/color.cfg" 1459978653 1213 620bba36b25224fa9b7e1ccb4ecb76fd ""
   "/usr/share/texlive/texmf-dist/tex/latex/graphics-cfg/graphics.cfg" 1465944070 1224 978390e9c2234eab29404bc21b268d1e ""
@@ -161,12 +163,12 @@
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1795304659 5418024 d27383b0a8fadef44c19c8c5a157ff8e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1795304670 2265671 bb4cb5a3660a026ad7e4e0b20268dcfd ""
   "auxiliary/IEEEtran.cls" 1795560663.57187 288304 b67b6fc6c2abb39f9b461923f5199343 ""
-  "auxiliary/project-report.aux" 1795597028.23428 4517 0b432211ed04021e10760fa200caac23 "pdflatex"
-  "auxiliary/project-report.bbl" 1795597027.84428 1033 c1076886b3a5b5d095bf31a67fa860cc "bibtex auxiliary/project-report"
+  "auxiliary/project-report.aux" 1795601592.2418 4797 0f7cfe7f384d18dd9dc5857e6733cd29 "pdflatex"
+  "auxiliary/project-report.bbl" 1795601591.85481 1033 c1076886b3a5b5d095bf31a67fa860cc "bibtex auxiliary/project-report"
   "images/lennard-jones-potential.png" 1795560663.57321 86852 03820d6066a84abc87976ae2b858e458 ""
-  "images/speedup_N1600.png" 1795562066.98823 85772 c707f5c0a535be99c7986f437d6cd45c ""
-  "images/speedup_c_N1600.png" 1795562067.43623 86933 a9815c77c3087a6b5998af332b677b97 ""
-  "project-report.tex" 1795597021.11731 17931 b601df5202e242559cead1afb53c7f40 ""
+  "images/speedup_N5000.png" 1795562067.93623 86070 73d5605abad19de0c4345979d893604a ""
+  "images/speedup_c_N5000.png" 1795562068.41523 87493 7c20114a178e1fa3ff6722bee6fa734c ""
+  "project-report.tex" 1795601579.63985 18102 05ebadf259c718a35f930b05b190315f ""
   (generated)
   "auxiliary/project-report.aux"
   "auxiliary/project-report.log"
