@@ -43,7 +43,7 @@ from typing import Dict, List, Optional, Tuple
 ELAPSED_RE = re.compile(
     r"([0-9][0-9,\.]*)\s*(?:\+-\s*([0-9][0-9,\.]*)\s*)?seconds\s+time\s+elapsed"
 )
-THREAD_DIR_RE = re.compile(r"^T(\d+)$")
+THREAD_DIR_RE = re.compile(r"^[Tt](\d+)$")
 METRIC_FILE_RE = re.compile(r"^metric_N(\d+)\.txt$")
 
 
